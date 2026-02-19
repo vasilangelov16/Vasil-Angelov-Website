@@ -1,1 +1,5 @@
+# Redirect band.vasilangelov.com to /band route
+https://band.vasilangelov.com/* /band 200!
+
+# SPA fallback
 /* /index.html 200
