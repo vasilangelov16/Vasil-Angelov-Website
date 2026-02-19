@@ -175,7 +175,7 @@ export const LiveGigsSection = () => {
             className="flex items-center gap-3 px-8 py-3 border border-white/10 text-white/80 uppercase text-[10px] tracking-[0.2em] hover:bg-white/5 transition-all rounded-sm w-full justify-center"
           >
             <ExternalLink size={14} />
-            <AnimatedText as="span">{t("liveGigs.bookPerformance")}</AnimatedText>
+            <AnimatedText as="span">{t("liveGigs.bookAPerformance")}</AnimatedText>
           </a>
         </div>
 

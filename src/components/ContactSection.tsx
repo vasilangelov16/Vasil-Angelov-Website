@@ -87,12 +87,12 @@ export const ContactSection = () => {
             whileInView={{ width: "40px" }}
             className="h-[2px] bg-primary mb-6"
           />
-          <AnimatedText as="span" className="text-[10px] tracking-[0.3em] uppercase text-primary mb-3 font-medium">{t("contact.bookings")}</AnimatedText>
+          <AnimatedText as="span" className="text-[10px] tracking-[0.3em] uppercase text-primary mb-3 font-medium">{t("contact.bookingsEnquiries")}</AnimatedText>
           <h2 className="text-4xl font-serif text-white font-bold leading-tight mb-4">
-            <AnimatedText>{t("contact.lets")}</AnimatedText> <br /><AnimatedText as="span" className="italic font-light opacity-80">{t("contact.connect")}</AnimatedText>
+            <AnimatedText>{t("contact.letsMakeIt")}</AnimatedText>
           </h2>
           <p className="text-sm text-muted-foreground font-light leading-relaxed max-w-xs mx-auto">
-            <AnimatedText>{t("contact.availableMobile")}</AnimatedText>
+            <AnimatedText>{t("contact.availableDesktop")}</AnimatedText>
           </p>
         </div>
 
