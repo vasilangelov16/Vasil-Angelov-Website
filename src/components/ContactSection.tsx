@@ -1,8 +1,8 @@
-
-
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Phone, Mail, Instagram, Youtube, Facebook, Music, FolderOpen } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { AnimatedText } from "@/components/AnimatedText";
 
 // Custom TikTok Icon
 const TiktokIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
@@ -49,6 +49,7 @@ const contactMethods = [
 ];
 
 export const ContactSection = () => {
+  const { t } = useTranslation();
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
@@ -86,12 +87,12 @@ export const ContactSection = () => {
             whileInView={{ width: "40px" }}
             className="h-[2px] bg-primary mb-6"
           />
-          <span className="text-[10px] tracking-[0.3em] uppercase text-primary mb-3 font-medium">Bookings</span>
+          <AnimatedText as="span" className="text-[10px] tracking-[0.3em] uppercase text-primary mb-3 font-medium">{t("contact.bookings")}</AnimatedText>
           <h2 className="text-4xl font-serif text-white font-bold leading-tight mb-4">
-            Let's <br /><span className="italic font-light opacity-80">Connect</span>
+            <AnimatedText>{t("contact.lets")}</AnimatedText> <br /><AnimatedText as="span" className="italic font-light opacity-80">{t("contact.connect")}</AnimatedText>
           </h2>
           <p className="text-sm text-muted-foreground font-light leading-relaxed max-w-xs mx-auto">
-            Available for live performances and private events.
+            <AnimatedText>{t("contact.availableMobile")}</AnimatedText>
           </p>
         </div>
 
@@ -110,7 +111,7 @@ export const ContactSection = () => {
                 <method.icon size={18} />
               </div>
               <span className="text-[10px] tracking-widest uppercase text-white/60 text-center">
-                {method.label.includes("@") ? "Email" : method.label.startsWith("+") ? "Phone" : "Social"}
+                <AnimatedText>{method.label.includes("@") ? t("contact.email") : method.label.startsWith("+") ? t("contact.phone") : t("contact.social")}</AnimatedText>
               </span>
             </motion.a>
           ))}
@@ -125,7 +126,7 @@ export const ContactSection = () => {
             className="flex items-center gap-3 px-8 py-3 bg-primary/10 border border-primary/20 text-primary uppercase text-[10px] tracking-[0.2em] hover:bg-primary/20 transition-all rounded-sm"
           >
             <FolderOpen size={14} />
-            <span>Press Kit</span>
+            <AnimatedText as="span">{t("contact.pressKit")}</AnimatedText>
           </a>
         </div>
 
@@ -158,7 +159,7 @@ export const ContactSection = () => {
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            Bookings & Enquiries
+            <AnimatedText>{t("contact.bookingsEnquiries")}</AnimatedText>
           </motion.span>
           <motion.h2
             className="hero-text text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground font-bold tracking-tight mb-8"
@@ -166,7 +167,7 @@ export const ContactSection = () => {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            Let's Make It Happen.
+            <AnimatedText>{t("contact.letsMakeIt")}</AnimatedText>
           </motion.h2>
           <motion.p
             className="text-muted-foreground text-lg sm:text-xl font-light tracking-wide max-w-2xl mx-auto"
@@ -174,7 +175,7 @@ export const ContactSection = () => {
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            Available for live performances, private events, and creative collaborations.
+            <AnimatedText>{t("contact.availableDesktop")}</AnimatedText>
           </motion.p>
         </div>
 
@@ -213,7 +214,7 @@ export const ContactSection = () => {
             className="group inline-flex items-center gap-3 px-8 sm:px-10 py-4 bg-primary/5 border border-primary/20 text-primary-foreground tracking-[0.2em] uppercase text-xs sm:text-sm font-medium hover:bg-primary/10 transition-colors duration-300 rounded-sm"
           >
             <FolderOpen size={16} className="text-primary" />
-            <span className="text-foreground group-hover:text-white transition-colors">Press Kit</span>
+            <AnimatedText as="span" className="text-foreground group-hover:text-white transition-colors">{t("contact.pressKit")}</AnimatedText>
           </a>
         </motion.div>
 

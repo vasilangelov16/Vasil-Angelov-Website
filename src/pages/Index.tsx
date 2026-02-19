@@ -7,12 +7,14 @@ import { AuraSection } from "@/components/AuraSection";
 import { LiveGigsSection } from "@/components/LiveGigsSection";
 import { ContactSection } from "@/components/ContactSection";
 import { GrainOverlay } from "@/components/GrainOverlay";
+import { GoToTop } from "@/components/GoToTop";
 
 const Index = () => {
   return (
     <main className="bg-background min-h-screen">
       <GrainOverlay />
       <Navigation />
+      <GoToTop />
       <HeroSection />
       <BiographySection />
       <AuraSection />
