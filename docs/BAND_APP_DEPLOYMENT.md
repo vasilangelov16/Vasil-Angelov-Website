@@ -106,6 +106,10 @@ npm run dev
 - HTTP: `http://localhost:3001`
 - WebSocket: `ws://localhost:3001/ws`
 
+**Testing on phone (same WiFi):** Open the app on your phone at `http://<laptop-ip>:8080/band` (e.g. `http://192.168.1.100:8080/band`). With `VITE_WS_URL=ws://localhost:3001/ws`, the app automatically replaces `localhost` with the current hostname, so the phone connects to your laptop's IP. Ensure both frontend (Vite) and backend (Express) are running.
+
+**If the badge stays "Connecting" on your phone:** The server may be unreachable. Check: (1) Phone and laptop on same WiFi, (2) Server running (`cd server && npm run dev`), (3) macOS firewall allows port 3001. After ~3 failed attempts the badge shows "Offline" — the app still works with local data.
+
 ### 2. Deploy Backend (Railway / Render / Fly.io)
 
 **Railway:**
@@ -134,6 +138,18 @@ Set `VITE_WS_URL` to your deployed WebSocket URL, e.g.:
 - `wss://your-app.railway.app`
 - `wss://your-app.onrender.com`
 
+**Same-origin deployment:** If you serve the frontend and backend from the same host (e.g. reverse proxy at `band.vasilangelov.com` with `/api` and `/ws` proxied to the backend), you can omit `VITE_WS_URL` and `VITE_API_URL`. The app will use the current origin for both.
+
+---
+
+## Part 3b: Song Suggestions
+
+When the singer selects a song, a suggestions button (✨) appears next to the tempo badge. Clicking it reshuffles the setlist so the 3 best "next" songs appear right after the current song.
+
+**Backend:** The server uses an advanced rule-based algorithm that considers key compatibility (circle of fifths, relative/parallel keys), tempo and BPM similarity, artist diversity, and energy flow.
+
+**Frontend:** The API URL is derived from `VITE_WS_URL` (same host). If your API is elsewhere, set `VITE_API_URL` explicitly.
+
 ---
 
 ## Part 4: Security Features
@@ -144,6 +160,14 @@ Set `VITE_WS_URL` to your deployed WebSocket URL, e.g.:
 
 ---
 
+## Part 4b: Song Repertoire
+
+Songs are stored in **`src/data/songs.json`** — a single source of truth used by both the frontend and server. Each song has: `id`, `title`, `artist`, `key`, `bpm`, `tempo`, `genre`, `lyrics`.
+
+The current repertoire has **145 songs** (STRANSKI, EX-YU, Makedonski). To add or edit songs, update this file. The server reads it at startup; the frontend bundles it at build time. If saved localStorage has fewer songs than the repertoire, the app auto-upgrades to the full list.
+
+---
+
 ## Part 5: PIN Configuration
 
 | Variable | Description |
@@ -151,7 +175,7 @@ Set `VITE_WS_URL` to your deployed WebSocket URL, e.g.:
 | `VITE_SINGER_PIN` | Singer PIN (full access) |
 | `VITE_MEMBER_PIN` | Member PIN (view-only) |
 
-Defaults (dev only): Singer `1234`, Member `5678`.
+Defaults (dev only): Singer `1234`, Member `5678`. **⚠️ Set strong PINs in production.**
 
 ---
 
@@ -159,6 +183,8 @@ Defaults (dev only): Singer `1234`, Member `5678`.
 
 - [ ] Porkbun: CNAME `band` → Netlify (or your host)
 - [ ] Netlify: Custom domain `band.vasilangelov.com`
-- [ ] Netlify: `VITE_SINGER_PIN`, `VITE_MEMBER_PIN` set
+- [ ] Netlify: `VITE_SINGER_PIN`, `VITE_MEMBER_PIN` set (change from defaults)
 - [ ] Backend: Deployed and `VITE_WS_URL` set (if using real-time)
 - [ ] Test: Open `band.vasilangelov.com` → PIN → Singer/Member behavior
+
+See **`docs/BAND_APP_PROD_CHECKLIST.md`** for a full pre-deploy checklist.

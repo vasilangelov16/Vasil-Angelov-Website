@@ -19,10 +19,11 @@ export interface BandAuth {
   timestamp: number;
 }
 
-const getConfiguredPins = () => ({
-  singer: import.meta.env.VITE_SINGER_PIN || "1234",
-  member: import.meta.env.VITE_MEMBER_PIN || "5678",
-});
+const CONFIGURED_PINS = (() => {
+  const singer = import.meta.env.VITE_SINGER_PIN || "1234";
+  const member = import.meta.env.VITE_MEMBER_PIN || "5678";
+  return { singer, member } as const;
+})();
 
 export const getStoredAuth = (): BandAuth | null => {
   try {
@@ -50,9 +51,8 @@ export const clearStoredAuth = () => {
 };
 
 const validatePin = (pin: string): BandRole | null => {
-  const { singer, member } = getConfiguredPins();
-  if (pin === singer) return "singer";
-  if (pin === member) return "member";
+  if (pin === CONFIGURED_PINS.singer) return "singer";
+  if (pin === CONFIGURED_PINS.member) return "member";
   return null;
 };
 
@@ -103,7 +103,6 @@ export const PinGate = ({ onAuth }: PinGateProps) => {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingAuth, setPendingAuth] = useState<BandAuth | null>(null);
-  const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutUntil, setLockoutUntil] = useState(0);
 
   const isLockedOut = lockoutUntil > Date.now();
@@ -149,7 +148,6 @@ export const PinGate = ({ onAuth }: PinGateProps) => {
         setPendingAuth(auth);
       } else {
         const next = incrementFailCount();
-        setFailedAttempts(next);
         setPin("");
         setIsSubmitting(false);
         setError("Invalid PIN");
@@ -388,8 +386,8 @@ export const PinGate = ({ onAuth }: PinGateProps) => {
                   placeholder="••••"
                   disabled={isSubmitting || isLockedOut}
                   className={cn(
-                    "w-full h-14 pl-12 pr-4 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground/60",
-                    "text-center text-lg tracking-[0.4em] font-mono",
+                    "w-full min-h-[52px] sm:h-14 pl-12 pr-4 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground/60",
+                    "text-center text-lg tracking-[0.4em] font-mono touch-manipulation",
                     "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30",
                     "transition-all duration-200",
                     error && "border-destructive/50 focus:ring-destructive/30 focus:border-destructive/50"
@@ -424,7 +422,7 @@ export const PinGate = ({ onAuth }: PinGateProps) => {
                 type="submit"
                 disabled={isSubmitting || isLockedOut}
                 className={cn(
-                  "w-full h-14 rounded-xl font-medium tracking-[0.2em] uppercase text-sm",
+                  "w-full min-h-[52px] sm:h-14 rounded-xl font-medium tracking-[0.2em] uppercase text-sm touch-manipulation",
                   "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground",
                   "hover:shadow-[0_0_30px_hsl(350,45%,35%,0.4)] transition-all duration-300",
                   "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"

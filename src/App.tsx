@@ -1,11 +1,13 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import BandApp from "./pages/BandApp";
 import NotFound from "./pages/NotFound";
+
+const BandApp = lazy(() => import("./pages/BandApp"));
 
 const queryClient = new QueryClient();
 
@@ -21,9 +23,24 @@ const App = () => (
         <Routes>
           <Route
             path="/"
-            element={isBandSubdomain() ? <BandApp /> : <Index />}
+            element={
+              isBandSubdomain() ? (
+                <Suspense fallback={null}>
+                  <BandApp />
+                </Suspense>
+              ) : (
+                <Index />
+              )
+            }
           />
-          <Route path="/band" element={<BandApp />} />
+          <Route
+            path="/band"
+            element={
+              <Suspense fallback={null}>
+                <BandApp />
+              </Suspense>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

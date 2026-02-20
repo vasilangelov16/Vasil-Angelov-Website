@@ -308,11 +308,33 @@ html {
   }
 }
 
-/* Band App - Safe area padding for mobile */
+/* Band App - Safe area padding for mobile (notch, home indicator) */
+@supports (padding: env(safe-area-inset-top)) {
+  .safe-area-top {
+    padding-top: max(0.625rem, env(safe-area-inset-top));
+  }
+}
 @supports (padding: env(safe-area-inset-bottom)) {
   .safe-area-bottom {
     padding-bottom: calc(1rem + env(safe-area-inset-bottom));
   }
+}
+.pb-safe {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+}
+.safe-area-fab {
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 640px) {
+  .safe-area-fab {
+    bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Band App - Setlist item performance: skip rendering off-screen items */
+.setlist-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 48px;
 }
 
 /* Band App - Hide scrollbar but keep functionality */
@@ -322,4 +344,29 @@ html {
 }
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* Band App - Lyrics modal overlay: full bleed on mobile/PWA (covers status bar, no white gaps) */
+.dialog-overlay-fullbleed {
+  top: calc(-1 * env(safe-area-inset-top, 0px));
+  left: calc(-1 * env(safe-area-inset-left, 0px));
+  right: calc(-1 * env(safe-area-inset-right, 0px));
+  bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+  min-height: 100dvh;
+  min-width: 100vw;
+}
+
+/* Band App - Lyrics modal scrollbar */
+.lyrics-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.lyrics-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.lyrics-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+.lyrics-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }

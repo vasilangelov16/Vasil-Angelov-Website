@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect, useRef, memo, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { BandProvider, useBandContext, type Song } from "@/context/BandContext";
+import { useState, useMemo, useEffect, useRef, memo, useCallback, useDeferredValue } from "react";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { BandProvider, useBandState, useBandUI, type Song } from "@/context/BandContext";
+import { hasWebSocket } from "@/hooks/useBandWebSocket";
 import {
   PinGate,
   getStoredAuth,
@@ -8,17 +9,39 @@ import {
   clearStoredAuth,
   type BandAuth,
 } from "@/components/PinGate";
-import { Music, X, Mic2, Users, Search, LogOut } from "lucide-react";
+import { Music, X, Mic2, Users, Search, LogOut, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+const PAGE_SIZE = 30; // Chunk size for infinite scroll (loads 30 at a time)
+const BLINK_DURATION = 2600;
 
-const PAGE_SIZE = 20;
-const BLINK_DURATION = 2800;
+// Apple-like spring config — smooth, minimal, elegant
+const APPLE_SPRING = { type: "spring" as const, stiffness: 300, damping: 30 };
+const APPLE_SPRING_TIGHT = { type: "spring" as const, stiffness: 400, damping: 30 };
+const APPLE_SPRING_GENTLE = { type: "spring" as const, stiffness: 200, damping: 25 };
+const LAYOUT_SPRING = { type: "spring" as const, stiffness: 180, damping: 22 }; // smooth reorder
+const LAYOUT_TWEEN = { duration: 0.45, ease: [0.32, 0.72, 0, 1] as const }; // buttery reorder
+const APPLE_TAP = { scale: 0.98 };
+const APPLE_EASE = [0.32, 0.72, 0, 1] as const; // Apple-style ease-out
 
 const BLINK_COLORS = ["#fbbf24", "#ffffff"] as const;
 const BLINK_TIMES = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] as const;
+const BLINK_ANIMATE_COLORS = [
+  ...BLINK_COLORS,
+  ...BLINK_COLORS,
+  ...BLINK_COLORS,
+  ...BLINK_COLORS,
+  ...BLINK_COLORS,
+] as const;
 
 const CurrentSongDisplay = memo(({ compact = false }: { compact?: boolean }) => {
-  const { state } = useBandContext();
+  const { state } = useBandState();
   const { currentSong } = state;
   const [blinkCount, setBlinkCount] = useState(0);
   const [isBlinking, setIsBlinking] = useState(false);
@@ -71,17 +94,9 @@ const CurrentSongDisplay = memo(({ compact = false }: { compact?: boolean }) => 
           <motion.div
             key={`blink-${blinkCount}`}
             initial={{ backgroundColor: BLINK_COLORS[0] }}
-            animate={{
-              backgroundColor: [
-                ...BLINK_COLORS,
-                ...BLINK_COLORS,
-                ...BLINK_COLORS,
-                ...BLINK_COLORS,
-                ...BLINK_COLORS,
-              ],
-            }}
-            transition={{ duration: 2.5, times: [...BLINK_TIMES], ease: "easeOut" }}
-            exit={{ opacity: 0 }}
+            animate={{ backgroundColor: BLINK_ANIMATE_COLORS }}
+            transition={{ duration: 2.2, times: [...BLINK_TIMES], ease: APPLE_EASE }}
+            exit={{ opacity: 0, transition: { duration: 0.35, ease: APPLE_EASE } }}
             className="absolute inset-0 z-0"
           />
         )}
@@ -92,10 +107,10 @@ const CurrentSongDisplay = memo(({ compact = false }: { compact?: boolean }) => 
           {currentSong ? (
             <motion.div
               key={currentSong.id}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.15 }}
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.98 }}
+              transition={APPLE_SPRING_GENTLE}
             >
               <div className={cn("inline-flex items-center gap-1.5", labelClass)}>
                 <span className={cn("relative flex", dotClass)}>
@@ -162,6 +177,7 @@ const CurrentSongDisplay = memo(({ compact = false }: { compact?: boolean }) => 
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, ease: APPLE_EASE }}
               className={compact ? "py-4" : "py-12 sm:py-16"}
             >
               <Music
@@ -171,7 +187,7 @@ const CurrentSongDisplay = memo(({ compact = false }: { compact?: boolean }) => 
                 )}
               />
               <p className={cn("text-gray-400 font-serif", compact ? "text-sm" : "text-base sm:text-lg")}>
-                Select a song
+                {compact ? "Tap a song below" : "Select a song from the setlist"}
               </p>
             </motion.div>
           )}
@@ -192,94 +208,299 @@ const SearchBar = memo(
     onChange: (value: string) => void;
     onClear: () => void;
   }) => (
-    <div className="relative">
+    <motion.div
+      className="relative"
+      initial={false}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
       <Search
-        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:left-2.5 text-gray-400 pointer-events-none"
         aria-hidden
       />
       <input
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Search..."
+        placeholder="Search songs..."
         aria-label="Search songs"
         autoComplete="off"
-        className="w-full pl-8 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-400 transition-colors text-base"
+        className="w-full pl-9 pr-10 py-3 sm:py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-200/50 transition-all duration-200 text-base min-h-[44px] sm:min-h-0 touch-manipulation"
       />
-      {value && (
-        <button
-          type="button"
-          onClick={onClear}
-          aria-label="Clear search"
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      )}
-    </div>
+      <AnimatePresence>
+        {value && (
+          <motion.button
+            type="button"
+            onClick={onClear}
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.92 }}
+            transition={APPLE_SPRING}
+            whileTap={APPLE_TAP}
+            aria-label="Clear search"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center touch-manipulation"
+          >
+            <X className="w-4 h-4" />
+          </motion.button>
+        )}
+      </AnimatePresence>
+    </motion.div>
   )
 );
 SearchBar.displayName = "SearchBar";
 
-const SongItem = memo(
-  ({ song, isActive, onSelect }: { song: Song; isActive: boolean; onSelect: (song: Song) => void }) => {
-    const handleClick = useCallback(() => onSelect(song), [song, onSelect]);
+function formatLyricsWithHighlights(lyrics: string) {
+  return lyrics.split("\n").map((line, i) => {
+    const isLabel = /^\[.+\]$/.test(line.trim());
+    if (isLabel) {
+      return (
+        <span
+          key={i}
+          className="inline-block mt-4 mb-2 px-3 py-1 rounded-lg bg-amber-200/90 text-amber-950 font-bold text-xs sm:text-sm uppercase tracking-wider first:mt-0"
+        >
+          {line.trim()}
+        </span>
+      );
+    }
     return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className={cn(
-        "w-full text-left px-2.5 py-1.5 rounded-lg transition-colors duration-100 flex items-center justify-between gap-2",
-        isActive
-          ? "bg-gray-900 text-white"
-          : "bg-white text-gray-900 border border-gray-100 active:bg-gray-50 cursor-pointer"
-      )}
-    >
-      <span
-        className={cn(
-          "font-semibold truncate flex-1 leading-tight text-[13px]",
-          isActive ? "text-white" : "text-gray-900"
-        )}
-      >
-        {song.title}
+      <span key={i} className="block">
+        {line || "\u00A0"}
       </span>
-      <div className="flex items-center gap-1 flex-shrink-0">
-        {song.tempo && (
-          <span
-            className={cn(
-              "px-1.5 py-0.5 rounded text-[9px] font-bold leading-none",
-              isActive ? "bg-amber-400 text-amber-900" : "bg-amber-50 text-amber-600"
+    );
+  });
+}
+
+const LyricsModal = memo(
+  ({ song, open, onOpenChange }: { song: Song | null; open: boolean; onOpenChange: (open: boolean) => void }) => {
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (open && scrollRef.current) {
+        scrollRef.current.scrollTo({ top: 0, behavior: "instant" });
+      }
+    }, [open, song?.id]);
+
+    if (!song) return null;
+    const hasLyrics = !!song.lyrics?.trim();
+    const ariaDescription = hasLyrics
+      ? `Lyrics for ${song.title}${song.artist ? ` by ${song.artist}` : ""}`
+      : `No lyrics available for ${song.title}`;
+
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          overlayClassName="backdrop-blur-sm bg-black/90 dialog-overlay-fullbleed"
+          aria-describedby={hasLyrics ? "lyrics-content" : undefined}
+          className="w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-none sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[calc(100dvh-2rem)] my-4 p-0 gap-0 overflow-hidden rounded-xl sm:rounded-2xl border border-gray-200 bg-white shadow-2xl duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 [&>button]:text-gray-600 [&>button]:hover:text-gray-900 [&>button]:hover:bg-gray-100 [&>button]:rounded-full [&>button]:p-2.5 sm:[&>button]:p-3 [&>button]:right-4 [&>button]:top-4 [&>button]:text-lg [&>button]:focus-visible:ring-2 [&>button]:focus-visible:ring-gray-400 [&>button]:focus-visible:ring-offset-2"
+        >
+          <DialogHeader className="px-5 sm:px-8 lg:px-10 pt-6 sm:pt-8 pb-4 border-b border-gray-100 shrink-0">
+            <DialogTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 pr-12">
+              {song.title}
+            </DialogTitle>
+            {song.artist && (
+              <p className="text-base sm:text-lg lg:text-xl text-gray-500 font-medium mt-1">{song.artist}</p>
             )}
-          >
-            {song.tempo[0]}
-          </span>
-        )}
-        {song.key && (
-          <span
-            className={cn(
-              "px-1.5 py-0.5 rounded text-[10px] font-bold leading-none min-w-[24px] text-center",
-              isActive ? "bg-white/20 text-white" : "bg-gray-900 text-white"
+            <DialogDescription className="sr-only">{ariaDescription}</DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 flex flex-col">
+            {hasLyrics ? (
+              <div
+                ref={scrollRef}
+                id="lyrics-content"
+                role="region"
+                aria-label="Song lyrics"
+                tabIndex={0}
+                className="lyrics-scroll h-[80dvh] sm:h-[85dvh] lg:h-[88dvh] w-full overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-inset"
+              >
+                <div className="px-5 sm:px-8 lg:px-10 py-6 sm:py-8 text-base sm:text-lg lg:text-xl text-gray-700 leading-loose">
+                  {formatLyricsWithHighlights(song.lyrics!)}
+                </div>
+              </div>
+            ) : (
+              <div className="px-8 py-12 text-center text-gray-400 text-base sm:text-lg">
+                No lyrics available for this song.
+              </div>
             )}
-          >
-            {song.key}
-          </span>
+            <p className="block sm:hidden px-5 py-3 text-center text-xs text-gray-400 border-t border-gray-100">
+              Tap outside to close
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+);
+LyricsModal.displayName = "LyricsModal";
+
+const SongItem = memo(
+  ({
+    song,
+    isActive,
+    onSelect,
+    onAISuggest,
+    onShowLyrics,
+    isAILoading,
+    isRecentlySuggested,
+    isSingerView,
+  }: {
+    song: Song;
+    isActive: boolean;
+    onSelect: (song: Song) => void;
+    onAISuggest?: (song: Song) => void;
+    onShowLyrics?: (song: Song) => void;
+    isAILoading?: boolean;
+    isRecentlySuggested?: boolean;
+    isSingerView?: boolean;
+  }) => {
+    const handleClick = useCallback(() => {
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(10);
+      }
+      onSelect(song);
+    }, [song, onSelect]);
+    const handleDoubleClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onShowLyrics?.(song);
+      },
+      [song, onShowLyrics]
+    );
+    const handleKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+            navigator.vibrate(10);
+          }
+          onSelect(song);
+        }
+      },
+      [song, onSelect]
+    );
+    const handleAIClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onAISuggest?.(song);
+      },
+      [song, onAISuggest]
+    );
+    return (
+      <motion.div
+        layout="position"
+        transition={{ layout: LAYOUT_TWEEN }}
+        initial={false}
+        className="relative setlist-item"
+        data-song-id={song.id}
+      >
+        {isRecentlySuggested && (
+          <motion.div
+            className="absolute inset-0 rounded-lg bg-amber-400/10 pointer-events-none -z-[1]"
+            initial={{ opacity: 0.5 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 1.4, ease: APPLE_EASE }}
+          />
         )}
-      </div>
-    </button>
-  );
+        <motion.div
+          role="button"
+          tabIndex={0}
+          onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
+          onKeyDown={handleKeyDown}
+          whileTap={APPLE_TAP}
+          transition={APPLE_SPRING_TIGHT}
+          title="Double-tap for lyrics"
+          className={cn(
+            "w-full text-left rounded-lg transition-colors duration-100 flex items-center justify-between gap-2 touch-manipulation",
+            isSingerView ? "px-3 py-3 sm:py-2 min-h-[48px] sm:min-h-0" : "px-2.5 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0",
+            isActive
+              ? "bg-gray-900 text-white"
+              : "bg-white text-gray-900 border border-gray-100 active:bg-gray-50 cursor-pointer"
+          )}
+        >
+        <span
+          className={cn(
+            "font-semibold truncate flex-1 leading-tight",
+            isSingerView ? "text-[14px]" : "text-[13px]",
+            isActive ? "text-white" : "text-gray-900"
+          )}
+        >
+          {song.title}
+        </span>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {song.tempo && (
+            <span
+              className={cn(
+                "rounded font-bold leading-none",
+                isSingerView ? "px-2 py-0.5 text-[10px]" : "px-1.5 py-0.5 text-[9px]",
+                isActive ? "bg-amber-400 text-amber-900" : "bg-amber-50 text-amber-600"
+              )}
+            >
+              {song.tempo[0]}
+            </span>
+          )}
+          {isActive && onAISuggest && (
+            <motion.button
+              type="button"
+              onClick={handleAIClick}
+              disabled={isAILoading}
+              whileTap={!isAILoading ? APPLE_TAP : undefined}
+              transition={APPLE_SPRING_TIGHT}
+              aria-label="Suggest next songs"
+              title="Suggest 3 next songs based on key, tempo, and feel"
+              className={cn(
+                "rounded-lg transition-colors touch-manipulation min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 flex items-center justify-center",
+                isSingerView ? "p-2 sm:p-1.5" : "p-2 sm:p-1",
+                isAILoading
+                  ? "text-amber-400/70 cursor-wait"
+                  : "text-amber-400 hover:bg-amber-400/20 hover:text-amber-300 active:bg-amber-400/30"
+              )}
+            >
+              <motion.span
+                animate={isAILoading ? { rotate: 360 } : { rotate: 0 }}
+                transition={{ duration: 1.2, repeat: isAILoading ? Infinity : 0, ease: "linear" }}
+                className="block"
+              >
+                <Sparkles className={isSingerView ? "w-4 h-4" : "w-3.5 h-3.5"} strokeWidth={2} />
+              </motion.span>
+            </motion.button>
+          )}
+          {song.key && (
+            <span
+              className={cn(
+                "rounded font-bold leading-none text-center",
+                isSingerView ? "px-2 py-0.5 text-[11px] min-w-[26px]" : "px-1.5 py-0.5 text-[10px] min-w-[24px]",
+                isActive ? "bg-white/20 text-white" : "bg-gray-900 text-white"
+              )}
+            >
+              {song.key}
+            </span>
+          )}
+        </div>
+        </motion.div>
+      </motion.div>
+    );
   }
 );
 SongItem.displayName = "SongItem";
 
-const SetlistSection = memo(({ searchQuery }: { searchQuery: string }) => {
-  const { state, setCurrentSong } = useBandContext();
-  const { setlist, currentSong } = state;
+const SetlistSection = memo(
+  ({ searchQuery, authRole }: { searchQuery: string; authRole: BandAuth["role"] }) => {
+    const deferredQuery = useDeferredValue(searchQuery);
+    const { state, setCurrentSong, reorderSetlistWithSuggestions } = useBandState();
+    const { setlist, currentSong } = state;
+    const [isAILoading, setIsAILoading] = useState(false);
+    const [recentlySuggestedIds, setRecentlySuggestedIds] = useState<Set<string>>(new Set());
+    const recentlySuggestedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [lyricsSong, setLyricsSong] = useState<Song | null>(null);
+    const [lyricsOpen, setLyricsOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollTarget, setScrollTarget] = useState<{ type: "song"; id: string } | { type: "ai"; currentId: string; lastSuggestedId: string } | null>(null);
+  const loadMoreThrottleRef = useRef<number | null>(null);
 
   const filteredSongs = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
     if (!q) return setlist;
     return setlist.filter(
       (s) =>
@@ -287,28 +508,165 @@ const SetlistSection = memo(({ searchQuery }: { searchQuery: string }) => {
         s.artist?.toLowerCase().includes(q) ||
         s.key?.toLowerCase().includes(q)
     );
-  }, [setlist, searchQuery]);
+  }, [setlist, deferredQuery]);
+
+  const filteredLengthRef = useRef(filteredSongs.length);
+  filteredLengthRef.current = filteredSongs.length;
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [searchQuery]);
+  }, [deferredQuery]);
+
+  useEffect(() => {
+    return () => {
+      if (recentlySuggestedTimeoutRef.current) clearTimeout(recentlySuggestedTimeoutRef.current);
+    };
+  }, []);
+
+  const loadAll = useCallback(() => {
+    setVisibleCount(filteredLengthRef.current);
+  }, []);
 
   useEffect(() => {
     const el = loadMoreRef.current;
     const root = scrollRef.current;
-    if (!el || !root || filteredSongs.length <= visibleCount) return;
+    const maxLen = filteredLengthRef.current;
+    if (!root || maxLen <= visibleCount) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredSongs.length));
-        }
-      },
-      { root, rootMargin: "100px", threshold: 0 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
+    const doLoadMore = () => {
+      if (loadMoreThrottleRef.current) return;
+      loadMoreThrottleRef.current = window.requestAnimationFrame(() => {
+        loadMoreThrottleRef.current = null;
+        setVisibleCount((prev) => {
+          const next = Math.min(prev + PAGE_SIZE, filteredLengthRef.current);
+          return next > prev ? next : prev;
+        });
+      });
+    };
+
+    let observer: IntersectionObserver | null = null;
+    if (el) {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry?.isIntersecting) doLoadMore();
+        },
+        { root, rootMargin: "200px", threshold: 0 }
+      );
+      observer.observe(el);
+    }
+
+    const onScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = root;
+      if (scrollHeight - scrollTop - clientHeight < 150) doLoadMore();
+    };
+    root.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      observer?.disconnect();
+      root.removeEventListener("scroll", onScroll);
+      if (loadMoreThrottleRef.current) cancelAnimationFrame(loadMoreThrottleRef.current);
+    };
   }, [filteredSongs.length, visibleCount]);
+
+  // Scroll after layout animation settles (LAYOUT_SPRING ~550ms)
+  useEffect(() => {
+    if (!scrollTarget || !scrollRef.current) return;
+    const container = scrollRef.current;
+    const delay = scrollTarget.type === "ai" ? 650 : 120;
+    const id = setTimeout(() => {
+      const scrollToInView = (el: Element) => {
+        const containerRect = container.getBoundingClientRect();
+        const elRect = (el as HTMLElement).getBoundingClientRect();
+        const elTop = container.scrollTop + (elRect.top - containerRect.top);
+        const elBottom = container.scrollTop + (elRect.bottom - containerRect.top);
+        if (elRect.top < containerRect.top) {
+          container.scrollTo({ top: elTop, behavior: "smooth" });
+        } else if (elRect.bottom > containerRect.bottom) {
+          container.scrollTo({ top: Math.max(0, elBottom - container.clientHeight), behavior: "smooth" });
+        }
+      };
+
+      if (scrollTarget.type === "song") {
+        const el = document.querySelector(`[data-song-id="${scrollTarget.id}"]`);
+        if (el) scrollToInView(el);
+      } else {
+        const currentEl = document.querySelector(`[data-song-id="${scrollTarget.currentId}"]`);
+        const lastEl = document.querySelector(`[data-song-id="${scrollTarget.lastSuggestedId}"]`);
+        if (currentEl && lastEl) {
+          const containerRect = container.getBoundingClientRect();
+          const currentRect = (currentEl as HTMLElement).getBoundingClientRect();
+          const lastRect = (lastEl as HTMLElement).getBoundingClientRect();
+          const currentScrollTop = container.scrollTop + (currentRect.top - containerRect.top);
+          const lastScrollBottom = container.scrollTop + (lastRect.bottom - containerRect.top);
+          const blockHeight = lastScrollBottom - currentScrollTop;
+          const targetScrollTop =
+            blockHeight <= container.clientHeight
+              ? currentScrollTop
+              : lastScrollBottom - container.clientHeight;
+          container.scrollTo({ top: Math.max(0, targetScrollTop), behavior: "instant" });
+        } else if (currentEl) {
+          scrollToInView(currentEl);
+        }
+      }
+      setScrollTarget(null);
+    }, delay);
+    return () => clearTimeout(id);
+  }, [scrollTarget, setlist]);
+
+  const handleAISuggest = useCallback(
+    async (song: Song) => {
+      if (setlist.length < 4) {
+        const { toast } = await import("sonner");
+        toast.info("Need at least 4 songs for suggestions");
+        return;
+      }
+      setIsAILoading(true);
+      try {
+        const { fetchAISuggestions, hasAIApi } = await import("@/lib/bandApi");
+        if (!hasAIApi()) {
+          throw new Error("Suggestions require server connection (set VITE_WS_URL or VITE_API_URL)");
+        }
+        const { suggestedIds } = await fetchAISuggestions(song.id, setlist);
+        if (suggestedIds.length > 0) {
+          if (recentlySuggestedTimeoutRef.current) clearTimeout(recentlySuggestedTimeoutRef.current);
+          setRecentlySuggestedIds(new Set(suggestedIds));
+          recentlySuggestedTimeoutRef.current = setTimeout(() => {
+            setRecentlySuggestedIds(new Set());
+            recentlySuggestedTimeoutRef.current = null;
+          }, 1500);
+          reorderSetlistWithSuggestions(suggestedIds, song);
+          setScrollTarget({
+            type: "ai",
+            currentId: song.id,
+            lastSuggestedId: suggestedIds[suggestedIds.length - 1],
+          });
+        } else {
+          const { toast } = await import("sonner");
+          toast.info("No suitable suggestions found");
+        }
+      } catch (err) {
+        console.error("Suggestions failed:", err);
+        const { toast } = await import("sonner");
+        toast.error(err instanceof Error ? err.message : "Failed to get suggestions");
+      } finally {
+        setIsAILoading(false);
+      }
+    },
+    [setlist, reorderSetlistWithSuggestions]
+  );
+
+  const handleShowLyrics = useCallback((song: Song) => {
+    setLyricsSong(song);
+    setLyricsOpen(true);
+  }, []);
+
+  const handleSelectSong = useCallback(
+    (song: Song) => {
+      setCurrentSong(song);
+      setScrollTarget({ type: "song", id: song.id });
+    },
+    [setCurrentSong]
+  );
 
   if (filteredSongs.length === 0) {
     return (
@@ -321,59 +679,163 @@ const SetlistSection = memo(({ searchQuery }: { searchQuery: string }) => {
   const visibleSongs = filteredSongs.slice(0, visibleCount);
   const hasMore = visibleCount < filteredSongs.length;
 
+  const isSinger = authRole === "singer";
+
   return (
-    <div
+    <motion.div
       ref={scrollRef}
-      className="flex-1 min-h-0 overflow-y-auto px-2 py-1.5 hide-scrollbar"
+      layoutScroll
+      className="flex-1 min-h-0 overflow-y-auto px-2 py-1.5 pb-safe hide-scrollbar relative"
     >
-      <div className="space-y-0.5">
-        {visibleSongs.map((song) => (
-          <SongItem
-            key={song.id}
-            song={song}
-            isActive={currentSong?.id === song.id}
-            onSelect={setCurrentSong}
-          />
-        ))}
-      </div>
-      {hasMore && <div ref={loadMoreRef} className="h-8" />}
+      <AnimatePresence>
+        {isAILoading && (
+          <motion.div
+            initial={{ opacity: 0, scaleX: 0 }}
+            animate={{ opacity: 1, scaleX: 1 }}
+            exit={{ opacity: 0, scaleX: 0 }}
+            transition={APPLE_SPRING}
+            className="sticky top-0 z-10 mb-1.5 h-[2px] origin-left overflow-hidden rounded-full bg-amber-200/20"
+          >
+            <motion.div
+              className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-amber-400/90 to-transparent"
+              animate={{ x: ["-100%", "400%"] }}
+              transition={{ duration: 2, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <LayoutGroup>
+        <motion.div layout="position" transition={{ layout: LAYOUT_TWEEN }} className={cn("space-y-0.5", isSinger && "space-y-1")}>
+          {visibleSongs.map((song) => (
+            <SongItem
+              key={song.id}
+              song={song}
+              isActive={currentSong?.id === song.id}
+              onSelect={handleSelectSong}
+              onAISuggest={isSinger ? handleAISuggest : undefined}
+              onShowLyrics={handleShowLyrics}
+              isAILoading={isAILoading}
+              isRecentlySuggested={recentlySuggestedIds.has(song.id)}
+              isSingerView={isSinger}
+            />
+          ))}
+        </motion.div>
+      </LayoutGroup>
+      {hasMore ? (
+        <div ref={loadMoreRef} className="py-3 flex flex-col items-center gap-2">
+          <p className="text-xs text-gray-400">
+            Showing {visibleCount} of {filteredSongs.length} songs
+          </p>
+          <motion.button
+            type="button"
+            onClick={loadAll}
+            whileTap={APPLE_TAP}
+            transition={APPLE_SPRING}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 touch-manipulation"
+          >
+            Load all {filteredSongs.length} songs
+          </motion.button>
+        </div>
+      ) : (
+        <p className="py-2 text-center text-xs text-gray-400">
+          All {filteredSongs.length} songs loaded
+        </p>
+      )}
       <div className="h-4" />
-    </div>
+      <LyricsModal
+        song={lyricsSong}
+        open={lyricsOpen}
+        onOpenChange={(open) => {
+          setLyricsOpen(open);
+          if (!open) setLyricsSong(null);
+        }}
+      />
+    </motion.div>
   );
-});
+  }
+);
 SetlistSection.displayName = "SetlistSection";
 
-const BandAppContent = ({ authRole, onLogout }: { authRole: BandAuth["role"]; onLogout: () => void }) => {
-  const { isSinger, setIsSinger } = useBandContext();
+const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"]; onLogout: () => void }) => {
+  const { isSinger, setIsSinger, hasUpdate, isConnected, isOffline } = useBandUI();
   const [searchQuery, setSearchQuery] = useState("");
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  const handleRoleToggle = useCallback(() => setIsSinger(!isSinger), [isSinger, setIsSinger]);
+  const handleRoleToggle = useCallback(() => setIsSinger((prev) => !prev), [setIsSinger]);
   const handleSearchChange = useCallback((v: string) => setSearchQuery(v), []);
   const handleSearchClear = useCallback(() => setSearchQuery(""), []);
+  const handleCloseLogout = useCallback(() => setShowLogoutDialog(false), []);
+  const handleConfirmLogout = useCallback(() => {
+    setShowLogoutDialog(false);
+    onLogout();
+  }, [onLogout]);
 
   return (
-    <div className="h-[100dvh] bg-gray-50 flex flex-col overflow-hidden">
-      <header className="flex-shrink-0 px-3 py-2 flex items-center justify-between bg-white border-b border-gray-200">
-        <div className="flex items-center gap-1.5">
-          <Music className="w-4 h-4 text-primary" aria-hidden />
-          <span className="text-gray-900 font-semibold text-sm">Setlist</span>
+    <div className="h-[100dvh] min-h-[100dvh] bg-gray-50 flex flex-col overflow-hidden">
+      <header className="flex-shrink-0 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between bg-white border-b border-gray-200 safe-area-top">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <Music className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" aria-hidden />
+          <span className="text-gray-900 font-semibold text-sm sm:text-base">Setlist</span>
+          {hasWebSocket() && (
+            <span
+              className={cn(
+                "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium",
+                isConnected
+                  ? "bg-emerald-100 text-emerald-700"
+                  : isOffline
+                    ? "bg-gray-100 text-gray-600"
+                    : "bg-amber-100 text-amber-700"
+              )}
+              title={
+                isConnected
+                  ? "Connected to server"
+                  : isOffline
+                    ? "Server unreachable. App works offline with local data."
+                    : "Connecting to server…"
+              }
+              aria-live="polite"
+            >
+              <span
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full shrink-0",
+                  isConnected ? "bg-emerald-500" : isOffline ? "bg-gray-400" : "bg-amber-500 animate-pulse"
+                )}
+              />
+              {isConnected ? "Live" : isOffline ? "Offline" : "Connecting"}
+            </span>
+          )}
+          <AnimatePresence>
+            {hasUpdate && (
+              <motion.span
+                key="synced"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={APPLE_SPRING}
+                className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-200 text-amber-900"
+              >
+                Synced
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
         <div className="flex items-center gap-2">
           {authRole === "singer" && (
-            <button
+            <motion.button
               type="button"
               onClick={handleRoleToggle}
+              whileTap={APPLE_TAP}
+              transition={APPLE_SPRING}
               aria-pressed={isSinger}
               aria-label={isSinger ? "Singer mode" : "Member mode"}
               className={cn(
-                "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors",
+                "flex items-center gap-1 px-2 py-1 sm:px-2 sm:py-0.5 rounded-full text-xs font-medium transition-colors h-8 touch-manipulation",
                 isSinger ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600"
               )}
             >
               {isSinger ? <Mic2 className="w-3 h-3" /> : <Users className="w-3 h-3" />}
               <span>{isSinger ? "Singer" : "Member"}</span>
-            </button>
+            </motion.button>
           )}
           {authRole === "member" && (
             <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
@@ -381,50 +843,63 @@ const BandAppContent = ({ authRole, onLogout }: { authRole: BandAuth["role"]; on
               Member
             </span>
           )}
-          <button
+          <motion.button
             type="button"
             onClick={() => setShowLogoutDialog(true)}
+            whileTap={APPLE_TAP}
+            transition={APPLE_SPRING}
             aria-label="Log out"
-            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            className="p-2.5 sm:p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center touch-manipulation"
           >
             <LogOut className="w-4 h-4" />
-          </button>
+          </motion.button>
         </div>
       </header>
 
-      {showLogoutDialog && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => setShowLogoutDialog(false)}
-        >
-          <div
-            className="w-full max-w-xs rounded-xl bg-white p-4 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+        {showLogoutDialog && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: APPLE_EASE }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={handleCloseLogout}
           >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={APPLE_SPRING_GENTLE}
+              className="w-full max-w-xs rounded-2xl bg-white p-4 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
             <p className="text-sm font-medium text-gray-900">Log out?</p>
             <p className="mt-1 text-xs text-gray-500">You’ll need your PIN to sign in again.</p>
             <div className="mt-4 flex gap-2">
-              <button
+              <motion.button
                 type="button"
-                onClick={() => setShowLogoutDialog(false)}
-                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                onClick={handleCloseLogout}
+                whileTap={APPLE_TAP}
+                transition={APPLE_SPRING}
+                className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
               >
                 Cancel
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 type="button"
-                onClick={() => {
-                  setShowLogoutDialog(false);
-                  onLogout();
-                }}
-                className="flex-1 rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                onClick={handleConfirmLogout}
+                whileTap={APPLE_TAP}
+                transition={APPLE_SPRING}
+                className="flex-1 rounded-xl bg-gray-900 px-3 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
               >
                 Log out
-              </button>
+              </motion.button>
             </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div
         className={cn(
@@ -458,12 +933,13 @@ const BandAppContent = ({ authRole, onLogout }: { authRole: BandAuth["role"]; on
               onClear={handleSearchClear}
             />
           </div>
-          <SetlistSection searchQuery={searchQuery} />
+          <SetlistSection searchQuery={searchQuery} authRole={authRole} />
         </>
       )}
     </div>
   );
-};
+});
+BandAppContent.displayName = "BandAppContent";
 
 const BandApp = () => {
   const [auth, setAuth] = useState<BandAuth | null>(() => getStoredAuth());
