@@ -1,8 +1,11 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import biographyImage from "@/assets/biography-singer.jpg";
+import { AnimatedText } from "@/components/AnimatedText";
 
 export const BiographySection = () => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -42,10 +45,10 @@ export const BiographySection = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <span className="text-primary font-serif italic text-2xl tracking-wider">The Voice</span>
+              <AnimatedText as="span" className="text-primary font-serif italic text-2xl tracking-wider">{t("biography.theVoice")}</AnimatedText>
               <h2 className="text-5xl font-serif text-white leading-none mt-2">
-                Behind the <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">Movement</span>
+                <AnimatedText>{t("biography.behindThe")}</AnimatedText> <br />
+                <AnimatedText as="span" className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">{t("biography.movement")}</AnimatedText>
               </h2>
             </motion.div>
             <div className="w-[1px] h-16 bg-gradient-to-b from-primary to-transparent mx-auto opacity-50" />
@@ -67,7 +70,7 @@ export const BiographySection = () => {
               {/* Integrated Quote on Image */}
               <div className="absolute bottom-8 left-6 right-6 z-20">
                 <p className="font-serif italic text-2xl text-white leading-relaxed">
-                  "Music is the <span className="text-primary">language of the soul</span>."
+                  "<AnimatedText as="span">{t("biography.quoteSoulStart")}</AnimatedText><AnimatedText as="span" className="text-primary">{t("biography.quoteSoulHighlight")}</AnimatedText><AnimatedText as="span">{t("biography.quoteSoulEnd")}</AnimatedText>"
                 </p>
               </div>
             </motion.div>
@@ -79,17 +82,14 @@ export const BiographySection = () => {
           {/* 3. Text Content - Refined & Artistic */}
           <div className="relative px-2">
             <div className="border-l-2 border-primary/30 pl-6 py-2 space-y-6">
-              <p className="text-xl text-white font-serif italic leading-relaxed">
-                "Vasil Angelov doesn't just perform; he <span className="text-primary">channels emotion</span>."
+              <p className="text-base text-muted-foreground font-light leading-relaxed">
+                <AnimatedText>{t("biography.narrative1")}</AnimatedText>
               </p>
               <p className="text-base text-muted-foreground font-light leading-relaxed">
-                Born with a voice that carries both fire and tenderness, he transforms every stage into a sanctuary of sound.
+                <AnimatedText>{t("biography.narrative2")}</AnimatedText>
               </p>
               <p className="text-base text-muted-foreground font-light leading-relaxed">
-                From intimate acoustic sets to grand orchestral celebrations, his artistry is defined by one thing: <span className="text-white italic">connection</span>.
-              </p>
-              <p className="text-base text-muted-foreground font-light leading-relaxed">
-                Not about perfection, but absolute presence.
+                <AnimatedText>{t("biography.narrative3")}</AnimatedText>
               </p>
             </div>
           </div>
@@ -99,7 +99,7 @@ export const BiographySection = () => {
             <div className="text-center">
               <span className="font-script text-5xl text-white block transform -rotate-2">Vasil Angelov</span>
               <div className="h-[1px] w-12 bg-primary mx-auto mt-3" />
-              <span className="text-[10px] uppercase tracking-[0.3em] text-white/50 mt-3 block">Est. 2018</span>
+              <AnimatedText as="span" className="text-[10px] uppercase tracking-[0.3em] text-white/50 mt-3 block">{t("biography.est")}</AnimatedText>
             </div>
           </div>
         </div>
@@ -121,7 +121,7 @@ export const BiographySection = () => {
             transition={{ duration: 0.8 }}
             className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-serif text-white leading-[0.9]"
           >
-            The Voice <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/40 italic font-light mt-2 sm:mt-0">Behind the Movement</span>
+            <AnimatedText>{t("biography.theVoice")}</AnimatedText> <AnimatedText as="span" className="block text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/40 italic font-light mt-2 sm:mt-0">{t("biography.behindMovement")}</AnimatedText>
           </motion.h2>
         </div>
 
@@ -151,8 +151,8 @@ export const BiographySection = () => {
 
               {/* Floating Element for Depth */}
               <div className="absolute -bottom-10 -left-6 z-30 bg-card/90 backdrop-blur-md p-6 border-l-2 border-primary shadow-xl max-w-[200px] hidden md:block">
-                <span className="text-xs uppercase tracking-widest text-muted-foreground block mb-1">Est. 2018</span>
-                <span className="font-serif italic text-lg text-white">"Soulful Resonance"</span>
+                <AnimatedText as="span" className="text-xs uppercase tracking-widest text-muted-foreground block mb-1">{t("biography.est")}</AnimatedText>
+                <AnimatedText as="span" className="font-serif italic text-lg text-white">"{t("biography.soulfulResonance")}"</AnimatedText>
               </div>
             </motion.div>
           </div>
@@ -169,7 +169,7 @@ export const BiographySection = () => {
             >
               <span className="absolute -top-12 -left-4 text-9xl text-primary/10 font-serif z-0">“</span>
               <p className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-serif leading-[1.2] sm:leading-[1.1] text-white/90 relative z-10">
-                Music is the <span className="text-primary italic">language of the soul</span> — I simply translate.
+                <AnimatedText>{t("biography.quoteTranslate")}</AnimatedText>
               </p>
             </motion.div>
 
@@ -180,15 +180,15 @@ export const BiographySection = () => {
 
               <div className="md:pl-10 space-y-8 text-lg md:text-xl text-muted-foreground font-light leading-relaxed">
                 <p>
-                  <strong className="text-white font-serif text-2xl tracking-wide">Vasil Angelov</strong> doesn't just perform; he channels emotion. Born with a voice that carries both fire and tenderness, he transforms every stage into a sanctuary of sound. His journey began not in the spotlight, but in the quiet moments of discovery, where he found that a melody could speak louder than words ever could.
+                  <AnimatedText>{t("biography.narrative1")}</AnimatedText>
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
                   <p>
-                    From intimate acoustic sets in smoke-filled jazz clubs to grand orchestral celebrations under stadium lights, his artistry is defined by one thing: connection. It is not about perfection, but about absolute presence.
+                    <AnimatedText>{t("biography.narrative2")}</AnimatedText>
                   </p>
                   <p>
-                    He crafts moments that linger, weaving stories of love, loss, and resilience. His philosophy is simple: Each note must be delivered with conviction, creating an atmosphere where the audience doesn't just listen — they <span className="text-white italic">feel</span>.
+                    <AnimatedText>{t("biography.narrative3")}</AnimatedText>
                   </p>
                 </div>
               </div>
@@ -198,7 +198,7 @@ export const BiographySection = () => {
             <div className="mt-20 flex justify-end">
               <div className="text-right">
                 <span className="block font-serif italic text-4xl text-white/40 hover:text-white/80 transition-colors cursor-default">Vasil Angelov</span>
-                <span className="block text-xs tracking-[0.5em] text-primary uppercase mt-2">The Artist</span>
+                <AnimatedText as="span" className="block text-xs tracking-[0.5em] text-primary uppercase mt-2">{t("biography.theArtist")}</AnimatedText>
               </div>
             </div>
 

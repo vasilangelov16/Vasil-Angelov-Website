@@ -1,6 +1,8 @@
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
 import { Play } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { AnimatedText } from "@/components/AnimatedText";
 
 import guitaristImg from "@/assets/band-guitarist.jpg";
 import keyboardistImg from "@/assets/band-keyboardist.jpg";
@@ -10,26 +12,27 @@ import gigPerformance from "@/assets/gig-performance.jpg";
 
 const members = [
   {
-    name: "Ivan Mitkovski",
-    role: "Guitarist",
+    roleKey: "guitarist" as const,
+    nameKey: "memberGuitaristName" as const,
+    quoteKey: "memberGuitaristQuote" as const,
     image: guitaristImg,
-    quote: "Strings that weep and roar in the same breath.",
   },
   {
-    name: "Leon Mitev",
-    role: "Keyboardist",
+    roleKey: "keyboardist" as const,
+    nameKey: "memberKeyboardistName" as const,
+    quoteKey: "memberKeyboardistQuote" as const,
     image: keyboardistImg,
-    quote: "Atmospheres woven from starlight and silence.",
   },
   {
-    name: "Emil Milev",
-    role: "Drums & Percussion",
+    roleKey: "drumsPercussion" as const,
+    nameKey: "memberDrumsName" as const,
+    quoteKey: "memberDrumsQuote" as const,
     image: drummerImg,
-    quote: "The heartbeat that drives the darkness forward.",
   },
 ];
 
-const MemberCard = ({ member, index, isInView }: { member: typeof members[0]; index: number; isInView: boolean }) => {
+const MemberCard = ({ member, index, isInView, roleKey }: { member: (typeof members)[0]; index: number; isInView: boolean; roleKey: string }) => {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -45,7 +48,7 @@ const MemberCard = ({ member, index, isInView }: { member: typeof members[0]; in
       <div className="relative aspect-[3/4] overflow-hidden rounded-sm shadow-xl">
         <motion.img
           src={member.image}
-          alt={member.name}
+          alt={t(`band.${member.nameKey}`)}
           className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
           animate={{ scale: hovered ? 1.05 : 1 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
@@ -66,14 +69,14 @@ const MemberCard = ({ member, index, isInView }: { member: typeof members[0]; in
             transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
           >
             <span className="block text-[10px] tracking-[0.2em] uppercase text-primary mb-1 font-medium">
-              {member.role}
+              <AnimatedText>{t(`band.${roleKey}`)}</AnimatedText>
             </span>
             <h3 className="text-2xl font-serif text-white tracking-wide mb-2">
-              {member.name}
+              <AnimatedText>{t(`band.${member.nameKey}`)}</AnimatedText>
             </h3>
             {/* Added subtle quote for depth */}
             <p className="text-xs text-muted-foreground italic font-light opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 border-l border-primary/50 pl-2">
-              "{member.quote}"
+              "{t(`band.${member.quoteKey}`)}"
             </p>
           </motion.div>
         </div>
@@ -83,6 +86,7 @@ const MemberCard = ({ member, index, isInView }: { member: typeof members[0]; in
 };
 
 export const BandSection = () => {
+  const { t } = useTranslation();
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
@@ -149,7 +153,7 @@ export const BandSection = () => {
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              The Ensemble
+              <AnimatedText>{t("band.theEnsemble")}</AnimatedText>
             </motion.span>
             <motion.h2
               className="text-4xl sm:text-6xl md:text-7xl font-serif text-white leading-[1.0] sm:leading-[0.95]"
@@ -157,7 +161,7 @@ export const BandSection = () => {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              Architects of <br /> <span className="text-white/40 italic">Sound.</span>
+              <AnimatedText>{t("band.architectsOf")}</AnimatedText> <br /> <AnimatedText as="span" className="text-white/40 italic">{t("band.sound")}</AnimatedText>
             </motion.h2>
           </div>
 
@@ -168,7 +172,7 @@ export const BandSection = () => {
             className="md:pl-10 lg:pl-20 border-l border-white/10 pl-4 md:pl-0"
           >
             <p className="text-base sm:text-lg text-muted-foreground font-light leading-relaxed">
-              More than a backing band, this is a collective of virtuosos. Each member brings a distinct texture to the sonic landscape, weaving intricate harmonies and driving rhythms that elevate every performance into an immersive experience.
+              <AnimatedText>{t("band.intro")}</AnimatedText>
             </p>
           </motion.div>
         </div>
@@ -176,7 +180,13 @@ export const BandSection = () => {
         {/* Members Grid - Wider Layout */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-16 sm:gap-8 lg:gap-16">
           {members.map((member, index) => (
-            <MemberCard key={member.name} member={member} index={index} isInView={isInView} />
+            <MemberCard
+              key={member.roleKey}
+              member={member}
+              index={index}
+              isInView={isInView}
+              roleKey={member.roleKey}
+            />
           ))}
         </div>
 
@@ -190,7 +200,7 @@ export const BandSection = () => {
           <div className="flex flex-col items-center mb-12 sm:mb-16">
             <span className="h-[1px] w-12 bg-white/10 mb-4" />
             <p className="text-center text-xs sm:text-sm tracking-[0.3em] uppercase text-white/50 font-medium">
-              Live Sessions
+              <AnimatedText>{t("band.liveSessions")}</AnimatedText>
             </p>
           </div>
 
@@ -217,9 +227,9 @@ export const BandSection = () => {
               </div>
 
               <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-10">
-                <span className="text-[10px] tracking-[0.2em] uppercase text-primary block mb-1">Session 01</span>
+                <AnimatedText as="span" className="text-[10px] tracking-[0.2em] uppercase text-primary block mb-1">{t("band.session01")}</AnimatedText>
                 <p className="text-xs sm:text-sm tracking-widest uppercase text-white font-medium">
-                  Live at Sofia Sessions
+                  <AnimatedText>{t("band.liveSofia")}</AnimatedText>
                 </p>
               </div>
             </motion.div>
@@ -245,9 +255,9 @@ export const BandSection = () => {
               </div>
 
               <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-10">
-                <span className="text-[10px] tracking-[0.2em] uppercase text-primary block mb-1">Session 02</span>
+                <AnimatedText as="span" className="text-[10px] tracking-[0.2em] uppercase text-primary block mb-1">{t("band.session02")}</AnimatedText>
                 <p className="text-xs sm:text-sm tracking-widest uppercase text-white font-medium">
-                  Acoustic Performance
+                  <AnimatedText>{t("band.acousticPerformance")}</AnimatedText>
                 </p>
               </div>
             </motion.div>

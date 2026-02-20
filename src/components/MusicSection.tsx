@@ -1,6 +1,8 @@
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
 import { Play, Music } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { AnimatedText } from "@/components/AnimatedText";
 
 import songThumb1 from "@/assets/song-thumb-1.jpg";
 import songThumb2 from "@/assets/song-thumb-2.jpg";
@@ -12,38 +14,44 @@ import songThumb6 from "@/assets/song-thumb-6.jpg";
 const songs = [
   {
     title: "Bez Izvini",
-    subtitle: "Single · 2024",
+    subtitleKey: "single" as const,
+    year: "2024",
     thumbnail: songThumb1,
     youtubeUrl: "https://youtu.be/gV6YWTQl4NU?si=yOg-CfUgNVWXKUlm",
     featured: true,
   },
   {
     title: "Posle 2",
-    subtitle: "Single · 2024",
+    subtitleKey: "single" as const,
+    year: "2024",
     thumbnail: songThumb4,
     youtubeUrl: "https://youtu.be/n2nyTo8C3JQ?si=nIiGI2lXSjYJGa9o",
   },
   {
     title: "3 vo 1",
-    subtitle: "Single · 2023",
+    subtitleKey: "single" as const,
+    year: "2023",
     thumbnail: songThumb2,
     youtubeUrl: "https://youtu.be/6CJE5tu1PC8?si=abNDeNHTABTYlQ5n",
   },
   {
     title: "Nocturno",
-    subtitle: "Live Session · 2021",
+    subtitleKey: "liveSession" as const,
+    year: "2021",
     thumbnail: songThumb3,
     youtubeUrl: "https://youtu.be/oD5A9bR0MLc?si=tTDNCAGh4VpI2u2X",
   },
   {
     title: "I Have Nothing",
-    subtitle: "Cover · 2023",
+    subtitleKey: "cover" as const,
+    year: "2023",
     thumbnail: songThumb5,
     youtubeUrl: "https://youtu.be/HAdLt8QA8jY?si=3dXqJ_gF8vbi63qY",
   },
   {
     title: "Ruski rulet",
-    subtitle: "Toše Proeski Tribute · 2022",
+    subtitleKey: "tribute" as const,
+    year: "2022",
     thumbnail: songThumb6,
     youtubeUrl: "https://youtu.be/lsyziaqLT8w?si=KE0QI0xT5UkyvrMn",
   },
@@ -52,7 +60,8 @@ const songs = [
 // Helper to define type
 const getSongs = () => songs;
 
-const SongCard = ({ song, index, isInView }: { song: ReturnType<typeof getSongs>[0]; index: number; isInView: boolean }) => {
+const SongCard = ({ song, index, isInView, subtitleKey, year }: { song: ReturnType<typeof getSongs>[0]; index: number; isInView: boolean; subtitleKey: string; year: string }) => {
+  const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
   const isFeatured = song.featured;
 
@@ -88,7 +97,7 @@ const SongCard = ({ song, index, isInView }: { song: ReturnType<typeof getSongs>
           {song.title}
         </h3>
         <p className="text-[10px] sm:text-xs tracking-[0.1em] uppercase text-white/70 font-medium group-hover:text-white transition-colors">
-          {song.subtitle}
+          <AnimatedText>{t(`music.${subtitleKey}`)} · {year}</AnimatedText>
         </p>
       </div>
 
@@ -103,6 +112,7 @@ const SongCard = ({ song, index, isInView }: { song: ReturnType<typeof getSongs>
 };
 
 export const MusicSection = () => {
+  const { t } = useTranslation();
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
@@ -187,7 +197,7 @@ export const MusicSection = () => {
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              The Sound
+              <AnimatedText>{t("music.theSound")}</AnimatedText>
             </motion.span>
             <motion.h2
               className="text-4xl sm:text-6xl md:text-7xl font-serif text-white leading-tight"
@@ -195,7 +205,7 @@ export const MusicSection = () => {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              Discography
+              <AnimatedText>{t("music.discography")}</AnimatedText>
             </motion.h2>
           </div>
 
@@ -206,7 +216,7 @@ export const MusicSection = () => {
             className="md:pl-10 lg:pl-20 border-l border-white/10 pl-4 md:pl-0"
           >
             <p className="text-base sm:text-lg text-muted-foreground font-light leading-relaxed mb-6">
-              Each track is a chapter — a moment captured in melody and rhythm. From studio precision to the raw energy of live performance, explore the sounds that define the journey.
+              <AnimatedText>{t("music.intro")}</AnimatedText>
             </p>
             <a
               href="https://open.spotify.com"
@@ -215,9 +225,8 @@ export const MusicSection = () => {
               className="inline-flex items-center gap-2 text-primary hover:text-white transition-colors text-sm uppercase tracking-widest font-medium p-2 -ml-2 sm:ml-0 hidden sm:inline-flex"
             >
               <Music size={16} />
-              Listen on Spotify
+              <AnimatedText>{t("music.listenSpotify")}</AnimatedText>
             </a>
-            {/* Mobile Spotify Button */}
             <a
               href="https://open.spotify.com"
               target="_blank"
@@ -225,7 +234,7 @@ export const MusicSection = () => {
               className="inline-flex sm:hidden items-center gap-2 justify-center w-full bg-white/5 border border-white/10 py-3 mt-2 rounded-sm text-primary hover:text-white transition-colors text-xs uppercase tracking-widest font-medium"
             >
               <Music size={14} />
-              Listen on Spotify
+              <AnimatedText>{t("music.listenSpotify")}</AnimatedText>
             </a>
           </motion.div>
         </div>
@@ -233,7 +242,14 @@ export const MusicSection = () => {
         {/* Song Grid - Asymmetrical Layout */}
         <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 overflow-x-auto snap-x snap-mandatory pb-8 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-hide">
           {songs.map((song, index) => (
-            <SongCard key={song.title} song={song} index={index} isInView={isInView} />
+            <SongCard
+              key={song.title}
+              song={song}
+              index={index}
+              isInView={isInView}
+              subtitleKey={song.subtitleKey}
+              year={song.year}
+            />
           ))}
         </div>
 
@@ -251,7 +267,7 @@ export const MusicSection = () => {
             className="group inline-flex items-center gap-3 px-8 sm:px-10 py-4 border border-white/10 text-foreground tracking-[0.2em] uppercase text-xs sm:text-sm hover:border-primary/50 hover:bg-primary/5 transition-all duration-500 font-medium rounded-sm w-full sm:w-auto justify-center"
           >
             <Play size={14} className="group-hover:text-primary transition-colors duration-300" />
-            <span>View All on YouTube</span>
+            <AnimatedText as="span">{t("music.viewAllYouTube")}</AnimatedText>
           </a>
         </motion.div>
       </div>

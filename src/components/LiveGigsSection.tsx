@@ -1,6 +1,8 @@
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Play, ExternalLink, FolderOpen } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { AnimatedText } from "@/components/AnimatedText";
 
 import gigVenue from "@/assets/gig-venue.jpg";
 import gigPerformance from "@/assets/gig-performance.jpg";
@@ -12,6 +14,7 @@ const venueNames = [
 ];
 
 export const LiveGigsSection = () => {
+  const { t } = useTranslation();
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
@@ -55,7 +58,7 @@ export const LiveGigsSection = () => {
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            On Stage
+            <AnimatedText>{t("liveGigs.onStage")}</AnimatedText>
           </motion.span>
           <motion.h2
             className="text-4xl sm:text-5xl md:text-6xl font-serif text-white text-center leading-tight mb-6"
@@ -63,7 +66,7 @@ export const LiveGigsSection = () => {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            Live Gigs
+            <AnimatedText>{t("liveGigs.liveGigs")}</AnimatedText>
           </motion.h2>
           <motion.p
             className="text-center text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base leading-relaxed font-light"
@@ -71,8 +74,7 @@ export const LiveGigsSection = () => {
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            From intimate lounges to grand celebration stages — every show is
-            crafted to create an atmosphere that lingers long after the last note.
+            <AnimatedText>{t("liveGigs.intro")}</AnimatedText>
           </motion.p>
         </div>
 
@@ -128,8 +130,8 @@ export const LiveGigsSection = () => {
             </div>
 
             <div className="absolute bottom-4 left-4">
-              <span className="text-[8px] tracking-[0.2em] uppercase text-primary block mb-1">Highlight</span>
-              <p className="text-xs tracking-widest uppercase text-white font-medium">Live Performance</p>
+              <AnimatedText as="span" className="text-[8px] tracking-[0.2em] uppercase text-primary block mb-1">{t("liveGigs.highlight")}</AnimatedText>
+              <p className="text-xs tracking-widest uppercase text-white font-medium"><AnimatedText>{t("liveGigs.livePerformance")}</AnimatedText></p>
             </div>
           </motion.div>
 
@@ -151,8 +153,8 @@ export const LiveGigsSection = () => {
             </div>
 
             <div className="absolute bottom-4 left-4">
-              <span className="text-[8px] tracking-[0.2em] uppercase text-primary block mb-1">Backstage</span>
-              <p className="text-xs tracking-widest uppercase text-white font-medium">Behind the Scenes</p>
+              <AnimatedText as="span" className="text-[8px] tracking-[0.2em] uppercase text-primary block mb-1">{t("liveGigs.backstage")}</AnimatedText>
+              <p className="text-xs tracking-widest uppercase text-white font-medium"><AnimatedText>{t("liveGigs.behindScenes")}</AnimatedText></p>
             </div>
           </motion.div>
         </div>
@@ -166,14 +168,14 @@ export const LiveGigsSection = () => {
             className="flex items-center gap-3 px-8 py-3 bg-primary/10 border border-primary/20 text-primary uppercase text-[10px] tracking-[0.2em] hover:bg-primary/20 transition-all rounded-sm w-full justify-center"
           >
             <FolderOpen size={14} />
-            <span>Press Kit</span>
+            <AnimatedText as="span">{t("liveGigs.pressKit")}</AnimatedText>
           </a>
           <a
             href="#contact"
             className="flex items-center gap-3 px-8 py-3 border border-white/10 text-white/80 uppercase text-[10px] tracking-[0.2em] hover:bg-white/5 transition-all rounded-sm w-full justify-center"
           >
             <ExternalLink size={14} />
-            <span>Book Performance</span>
+            <AnimatedText as="span">{t("liveGigs.bookAPerformance")}</AnimatedText>
           </a>
         </div>
 
@@ -206,9 +208,9 @@ export const LiveGigsSection = () => {
             </div>
 
             <div className="absolute bottom-6 left-6 z-10">
-              <span className="text-[10px] tracking-[0.2em] uppercase text-primary block mb-1">Highlight</span>
+              <AnimatedText as="span" className="text-[10px] tracking-[0.2em] uppercase text-primary block mb-1">{t("liveGigs.highlight")}</AnimatedText>
               <p className="text-sm tracking-widest uppercase text-white font-medium">
-                Live Performance
+                <AnimatedText>{t("liveGigs.livePerformance")}</AnimatedText>
               </p>
             </div>
           </motion.div>
@@ -235,9 +237,9 @@ export const LiveGigsSection = () => {
             </div>
 
             <div className="absolute bottom-6 left-6 z-10">
-              <span className="text-[10px] tracking-[0.2em] uppercase text-primary block mb-1">Backstage</span>
+              <AnimatedText as="span" className="text-[10px] tracking-[0.2em] uppercase text-primary block mb-1">{t("liveGigs.backstage")}</AnimatedText>
               <p className="text-sm tracking-widest uppercase text-white font-medium">
-                Behind the Scenes
+                <AnimatedText>{t("liveGigs.behindScenes")}</AnimatedText>
               </p>
             </div>
           </motion.div>
@@ -257,14 +259,14 @@ export const LiveGigsSection = () => {
             className="group inline-flex items-center gap-3 px-8 sm:px-10 py-4 bg-primary/5 border border-primary/20 text-primary-foreground tracking-[0.2em] uppercase text-xs sm:text-sm font-medium hover:bg-primary/10 transition-colors duration-300 rounded-sm"
           >
             <FolderOpen size={16} className="text-primary" />
-            <span className="text-foreground group-hover:text-white transition-colors">Press Kit</span>
+            <AnimatedText as="span" className="text-foreground group-hover:text-white transition-colors">{t("liveGigs.pressKit")}</AnimatedText>
           </a>
           <a
             href="#contact"
             className="inline-flex items-center gap-3 px-8 sm:px-10 py-4 border border-white/10 text-foreground tracking-[0.2em] uppercase text-xs sm:text-sm font-medium hover:bg-white/5 hover:border-white/20 transition-colors duration-300 rounded-sm"
           >
             <ExternalLink size={16} />
-            Book a Performance
+            <AnimatedText>{t("liveGigs.bookAPerformance")}</AnimatedText>
           </a>
         </motion.div>
       </div>

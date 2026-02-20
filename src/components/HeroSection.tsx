@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Compass } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import heroImage from "@/assets/hero-singer.jpg";
+import { AnimatedText } from "@/components/AnimatedText";
 
 export const HeroSection = () => {
+  const { t } = useTranslation();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -136,11 +139,11 @@ export const HeroSection = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
         >
-          <span className="italic font-serif font-bold text-primary text-xl sm:text-2xl md:text-3xl pr-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-            Beyond
-          </span>
-          the stage. <br className="hidden sm:block" />
-          A voice that defines the moment.
+          <AnimatedText as="span" className="italic font-serif font-bold text-primary text-xl sm:text-2xl md:text-3xl pr-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+            {t("hero.taglineBeyond")}
+          </AnimatedText>
+          <AnimatedText>{t("hero.taglineRest")}</AnimatedText> <br className="hidden sm:block" />
+          <AnimatedText>{t("hero.taglineVoice")}</AnimatedText>
         </motion.p>
 
         {/* Premium CTA Button - Single Explore */}
@@ -161,7 +164,7 @@ export const HeroSection = () => {
               size={20}
               className="relative z-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-45"
             />
-            <span className="relative z-10 font-semibold">Explore</span>
+            <AnimatedText as="span" className="relative z-10 font-semibold">{t("hero.explore")}</AnimatedText>
           </motion.a>
         </motion.div>
       </div>

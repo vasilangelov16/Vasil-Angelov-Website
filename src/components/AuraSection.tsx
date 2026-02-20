@@ -1,12 +1,14 @@
-
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Play } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { AnimatedText } from "@/components/AnimatedText";
 import auraHero from "@/assets/aura-hero.jpg";
 import auraMoment from "@/assets/aura-moment.jpg";
 import auraAccent from "@/assets/aura-moment-2.jpg";
 
 export const AuraSection = () => {
+  const { t } = useTranslation();
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
@@ -72,7 +74,7 @@ export const AuraSection = () => {
           <div className="lg:col-span-7 flex flex-col items-start relative z-20 pt-10 sm:pt-0">
             {/* Floating "AURA" Title - behind text on mobile, consistent size */}
             <h2 className="absolute -top-12 -left-4 sm:-top-20 sm:-left-10 text-[25vw] md:text-[18rem] font-serif font-bold text-white/25 pointer-events-none select-none leading-none z-0">
-              AURA
+              <AnimatedText as="span">{t("aura.title")}</AnimatedText>
             </h2>
 
             <motion.div
@@ -81,10 +83,10 @@ export const AuraSection = () => {
               transition={{ duration: 0.8 }}
               className="mb-8 sm:mb-12 relative z-10"
             >
-              <span className="block text-primary tracking-[0.4em] text-xs sm:text-sm uppercase mb-3 pl-1">The Essence</span>
+              <AnimatedText as="span" className="block text-primary tracking-[0.4em] text-xs sm:text-sm uppercase mb-3 pl-1">{t("aura.theEssence")}</AnimatedText>
               <h3 className="text-4xl sm:text-5xl md:text-7xl font-serif text-white leading-[0.95] mb-6 sm:mb-8">
-                Celebrating the <br />
-                <span className="italic text-white/80">Feminine Spirit</span>
+                <AnimatedText>{t("aura.celebrating")}</AnimatedText> <br />
+                <AnimatedText as="span" className="italic text-white/80">{t("aura.feminineSpirit")}</AnimatedText>
               </h3>
               <div className="h-[1px] w-24 sm:w-32 bg-gradient-to-r from-primary to-transparent" />
             </motion.div>
@@ -95,24 +97,23 @@ export const AuraSection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                <strong className="text-white font-serif tracking-wide text-xl sm:text-2xl">Aura</strong> is a movement born from genuine respect and deep admiration. It is a celebration of the energy that drives, inspires, and transforms.
+                <AnimatedText>{t("aura.para1")}</AnimatedText>
               </motion.p>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                Through intimate gatherings and moments woven into every concert, Aura creates a space where elegance meets emotion. It is a promise that every woman feels seen, valued, and celebrated.
+                <AnimatedText>{t("aura.para2")}</AnimatedText>
               </motion.p>
 
-              {/* New Text Block: Poetic Conclusion */}
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
                 className="text-white/80 italic font-serif"
               >
-                "It is a silent language, a dialogue of glances and gestures, where the unspoken becomes the most powerful verse of the song."
+                "<AnimatedText>{t("aura.para3")}</AnimatedText>"
               </motion.p>
             </div>
           </div>
@@ -146,7 +147,7 @@ export const AuraSection = () => {
                       <path id="textPath" d="M 50, 50 m -37, 0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" fill="transparent" />
                       <text className="fill-white/80 text-[11px] font-sans font-bold tracking-[0.2em] uppercase">
                         <textPath href="#textPath" startOffset="0%">
-                          • Watch The Film • Watch The Film
+                          {t("aura.watchFilm")}
                         </textPath>
                       </text>
                     </svg>
@@ -171,7 +172,7 @@ export const AuraSection = () => {
 
             {/* Decorative Elements */}
             <div className="absolute -bottom-10 -right-8 sm:-bottom-6 sm:-right-6 z-0">
-              <span className="font-serif italic text-4xl sm:text-6xl text-white/10 rotate-90 origin-bottom-right block">Grace</span>
+              <AnimatedText as="span" className="font-serif italic text-4xl sm:text-6xl text-white/10 rotate-90 origin-bottom-right block">{t("aura.grace")}</AnimatedText>
             </div>
           </div>
         </div>
@@ -179,9 +180,9 @@ export const AuraSection = () => {
 
         {/* Bottom Quote Mark */}
         <div className="mt-16 sm:mt-20 lg:mt-0 flex justify-center lg:justify-start">
-          <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-white/30 border border-white/10 px-4 sm:px-6 py-2 rounded-full backdrop-blur-md">
-            Curated by Vasil Angelov
-          </span>
+          <AnimatedText as="span" className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-white/30 border border-white/10 px-4 sm:px-6 py-2 rounded-full backdrop-blur-md">
+            {t("aura.curatedBy")}
+          </AnimatedText>
         </div>
       </div>
     </section>

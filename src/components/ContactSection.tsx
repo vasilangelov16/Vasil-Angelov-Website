@@ -1,29 +1,8 @@
-
-
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { Phone, Mail, Instagram, Youtube, Facebook, Music, FolderOpen } from "lucide-react";
-
-// Custom TikTok Icon
-const TiktokIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    stroke="none"
-    className={className}
-  >
-    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-  </svg>
-);
-
-const socialLinks = [
-  { name: "Facebook", icon: Facebook, href: "https://facebook.com" },
-  { name: "Spotify", icon: Music, href: "https://spotify.com" },
-  { name: "TikTok", icon: TiktokIcon, href: "https://tiktok.com" },
-];
+import { Phone, Mail, Instagram, Youtube } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { AnimatedText } from "@/components/AnimatedText";
 
 const contactMethods = [
   {
@@ -38,17 +17,18 @@ const contactMethods = [
   },
   {
     icon: Instagram,
-    label: "@vasilangelov",
-    href: "https://instagram.com/vasilangelov",
+    label: "@vasillangelov",
+    href: "https://www.instagram.com/vasillangelov/?hl=en",
   },
   {
     icon: Youtube,
-    label: "@vasilangelov",
-    href: "https://youtube.com/@vasilangelov",
+    label: "@VasilAngelovv",
+    href: "https://www.youtube.com/@VasilAngelovv",
   },
 ];
 
 export const ContactSection = () => {
+  const { t } = useTranslation();
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
@@ -86,12 +66,12 @@ export const ContactSection = () => {
             whileInView={{ width: "40px" }}
             className="h-[2px] bg-primary mb-6"
           />
-          <span className="text-[10px] tracking-[0.3em] uppercase text-primary mb-3 font-medium">Bookings</span>
+          <AnimatedText as="span" className="text-[10px] tracking-[0.3em] uppercase text-primary mb-3 font-medium">{t("contact.bookingsEnquiries")}</AnimatedText>
           <h2 className="text-4xl font-serif text-white font-bold leading-tight mb-4">
-            Let's <br /><span className="italic font-light opacity-80">Connect</span>
+            <AnimatedText>{t("contact.letsMakeIt")}</AnimatedText>
           </h2>
           <p className="text-sm text-muted-foreground font-light leading-relaxed max-w-xs mx-auto">
-            Available for live performances and private events.
+            <AnimatedText>{t("contact.availableDesktop")}</AnimatedText>
           </p>
         </div>
 
@@ -101,6 +81,8 @@ export const ContactSection = () => {
             <motion.a
               key={method.label}
               href={method.href}
+              target="_blank"
+              rel="noopener noreferrer"
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -110,33 +92,12 @@ export const ContactSection = () => {
                 <method.icon size={18} />
               </div>
               <span className="text-[10px] tracking-widest uppercase text-white/60 text-center">
-                {method.label.includes("@") ? "Email" : method.label.startsWith("+") ? "Phone" : "Social"}
+                <AnimatedText>{method.label.includes("@") ? t("contact.email") : method.label.startsWith("+") ? t("contact.phone") : t("contact.social")}</AnimatedText>
               </span>
             </motion.a>
           ))}
         </div>
 
-        {/* Press Kit Button - Consistent with Desktop */}
-        <div className="flex justify-center mb-12">
-          <a
-            href="https://drive.google.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 px-8 py-3 bg-primary/10 border border-primary/20 text-primary uppercase text-[10px] tracking-[0.2em] hover:bg-primary/20 transition-all rounded-sm"
-          >
-            <FolderOpen size={14} />
-            <span>Press Kit</span>
-          </a>
-        </div>
-
-        {/* Footer Socials */}
-        <div className="border-t border-white/5 pt-8 flex justify-center gap-8">
-          {socialLinks.map((social) => (
-            <a key={social.name} href={social.href} className="text-muted-foreground hover:text-white transition-colors">
-              <social.icon size={20} strokeWidth={1.5} />
-            </a>
-          ))}
-        </div>
         <div className="text-center mt-8">
           <p className="text-[10px] text-white/20 tracking-widest uppercase">© 2026 Vasil Angelov</p>
         </div>
@@ -158,7 +119,7 @@ export const ContactSection = () => {
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            Bookings & Enquiries
+            <AnimatedText>{t("contact.bookingsEnquiries")}</AnimatedText>
           </motion.span>
           <motion.h2
             className="hero-text text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground font-bold tracking-tight mb-8"
@@ -166,7 +127,7 @@ export const ContactSection = () => {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            Let's Make It Happen.
+            <AnimatedText>{t("contact.letsMakeIt")}</AnimatedText>
           </motion.h2>
           <motion.p
             className="text-muted-foreground text-lg sm:text-xl font-light tracking-wide max-w-2xl mx-auto"
@@ -174,7 +135,7 @@ export const ContactSection = () => {
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            Available for live performances, private events, and creative collaborations.
+            <AnimatedText>{t("contact.availableDesktop")}</AnimatedText>
           </motion.p>
         </div>
 
@@ -184,6 +145,8 @@ export const ContactSection = () => {
             <motion.a
               key={method.label}
               href={method.href}
+              target="_blank"
+              rel="noopener noreferrer"
               className="group flex flex-col items-center gap-6"
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -198,47 +161,6 @@ export const ContactSection = () => {
             </motion.a>
           ))}
         </div>
-
-        {/* Press Kit Button */}
-        <motion.div
-          className="mb-24 flex justify-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.5 }}
-        >
-          <a
-            href="https://drive.google.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-3 px-8 sm:px-10 py-4 bg-primary/5 border border-primary/20 text-primary-foreground tracking-[0.2em] uppercase text-xs sm:text-sm font-medium hover:bg-primary/10 transition-colors duration-300 rounded-sm"
-          >
-            <FolderOpen size={16} className="text-primary" />
-            <span className="text-foreground group-hover:text-white transition-colors">Press Kit</span>
-          </a>
-        </motion.div>
-
-        {/* Social Links - Clean Row */}
-        <motion.div
-          className="relative py-12 border-t border-white/5"
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.8, delay: 0.6 }}
-        >
-          <div className="flex justify-center gap-8 sm:gap-16">
-            {socialLinks.map((social, i) => (
-              <a
-                key={social.name}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary hover:scale-110 transition-all duration-300 transform"
-                aria-label={social.name}
-              >
-                <social.icon size={28} strokeWidth={1.5} />
-              </a>
-            ))}
-          </div>
-        </motion.div>
 
         {/* Footer */}
         <motion.div
