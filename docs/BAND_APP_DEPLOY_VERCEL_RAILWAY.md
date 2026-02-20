@@ -37,7 +37,7 @@ your-app.railway.app (Railway)     →  Backend (Express + WebSocket)
 ### 1.3 Configure the Service
 
 1. Click the new service → **Settings**
-2. **Root Directory**: `server` (important – backend lives in `server/`)
+2. **Root Directory**: `server` (important – backend lives in `server/`, and `songs.json` is at `server/data/songs.json` relative to `index.js`)
 3. **Build Command**: `npm install` (or leave default)
 4. **Start Command**: `npm start` (runs `node src/index.js`)
 5. **Watch Paths**: `server/**` (optional – redeploy on server changes)

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, memo, type ReactNode } from "react";
 import type { BandRole } from "@/components/PinGate";
 import { useBandWebSocket } from "@/hooks/useBandWebSocket";
-import REPERTOIRE_SONGS from "@/data/songs.json";
+import REPERTOIRE_SONGS from "@band-songs";
 
 export interface Song {
   id: string;

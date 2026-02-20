@@ -162,7 +162,7 @@ When the singer selects a song, a suggestions button (✨) appears next to the t
 
 ## Part 4b: Song Repertoire
 
-Songs are stored in **`src/data/songs.json`** — a single source of truth used by both the frontend and server. Each song has: `id`, `title`, `artist`, `key`, `bpm`, `tempo`, `genre`, `lyrics`.
+Songs are stored in **`server/data/songs.json`** — a single source of truth used by both the frontend and server (loaded relative to `server/src/index.js`). Each song has: `id`, `title`, `artist`, `key`, `bpm`, `tempo`, `genre`, `lyrics`.
 
 The current repertoire has **145 songs** (STRANSKI, EX-YU, Makedonski). To add or edit songs, update this file. The server reads it at startup; the frontend bundles it at build time. If saved localStorage has fewer songs than the repertoire, the app auto-upgrades to the full list.
 

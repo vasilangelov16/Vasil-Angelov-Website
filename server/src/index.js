@@ -13,7 +13,7 @@ import { createServer } from "http";
 const PORT = process.env.PORT || 3001;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 
-const SONGS_PATH = join(__dirname, "../../src/data/songs.json");
+const SONGS_PATH = join(__dirname, "../data/songs.json");
 const REPERTOIRE = JSON.parse(readFileSync(SONGS_PATH, "utf-8"));
 const repertoireIds = new Set(REPERTOIRE.map((s) => s.id));
 

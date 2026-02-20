@@ -7,7 +7,7 @@ Use this checklist before deploying the Band Setlist app to band.vasilangelov.co
 ## Pre-Deploy Verification
 
 - [ ] **Build succeeds**: `npm run build` completes without errors
-- [ ] **145 songs loaded**: `src/data/songs.json` has full repertoire
+- [ ] **145 songs loaded**: `server/data/songs.json` has full repertoire
 - [ ] **Server runs**: `cd server && npm run dev` starts without errors
 - [ ] **Merge main**: Branch is up to date with `origin/main`
 
@@ -43,7 +43,7 @@ Use this checklist before deploying the Band Setlist app to band.vasilangelov.co
 - [ ] Start command: `npm start`
 - [ ] `PORT` (usually auto-set by host)
 - [ ] `CORS_ORIGIN` (optional, defaults to `*`)
-- [ ] Server reads `src/data/songs.json` at startup (same repo)
+- [ ] Server reads `server/data/songs.json` at startup (relative to index.js)
 
 ---
 
