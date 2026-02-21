@@ -57,15 +57,21 @@ wss.on("connection", (ws) => {
 
       const now = Date.now();
       const next = { ...state, lastUpdate: now };
+      const repertoireMap = new Map(REPERTOIRE.map((s) => [String(s.id), s]));
 
       if (payload.currentSong !== undefined) {
-        next.currentSong = payload.currentSong;
+        const cs = payload.currentSong;
+        if (cs && typeof cs === "object" && cs.id != null) {
+          const fromRep = repertoireMap.get(String(cs.id));
+          next.currentSong = fromRep ? { ...fromRep } : { ...cs };
+        } else {
+          next.currentSong = cs;
+        }
       }
       if (Array.isArray(payload.setlist)) {
-        // Preserve singer's order (e.g. after AI reorder) - merge repertoire data for full song info
-        const repertoireMap = new Map(REPERTOIRE.map((s) => [s.id, s]));
         next.setlist = payload.setlist.map((s) => {
-          const fromRep = repertoireMap.get(s.id);
+          const id = s && typeof s === "object" ? String(s.id) : null;
+          const fromRep = id ? repertoireMap.get(id) : null;
           return fromRep ? { ...fromRep } : s;
         });
       }

@@ -51,7 +51,7 @@ Use this checklist before deploying the Band Setlist app to band.vasilangelov.co
 
 - [ ] Open `band.vasilangelov.com` → redirects to `/band`
 - [ ] Enter Singer PIN → full setlist, search, AI suggest, lyrics
-- [ ] Enter Member PIN → view-only, sees Now Playing
+- [ ] Enter Member PIN → view-only, sees Now Playing + metronome
 - [ ] Wrong PIN → lockout after 5 attempts
 - [ ] All 145 songs visible (scroll or "Load all")
 - [ ] WebSocket: singer change syncs to member (if `VITE_WS_URL` set)
@@ -70,3 +70,5 @@ Use this checklist before deploying the Band Setlist app to band.vasilangelov.co
 - Tap Now Playing to scroll list to selected song (Apple-like smooth scroll)
 - Real-time sync via WebSocket
 - PIN auth (Singer/Member), 24h session, rate limiting
+- **Member view**: Visual metronome (BPM from song, beat 1–4 indicator, On/Off toggle)
+- **Member view**: Stage-optimized Now Playing (large text, key, BPM, tempo, genre)

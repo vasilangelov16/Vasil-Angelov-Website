@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 const PAGE_SIZE = 30; // Chunk size for infinite scroll (loads 30 at a time)
 const BLINK_DURATION = 2600;
 
@@ -48,6 +49,150 @@ function animateScrollTo(container: HTMLElement, targetTop: number, durationMs =
   requestAnimationFrame(tick);
 }
 
+const DEFAULT_METRONOME_BPM = 120;
+const METRONOME_PULSE_MS = 100;
+
+const VisualMetronome = memo(
+  ({
+    bpm,
+    songId,
+    enabled,
+    onEnabledChange,
+  }: {
+    bpm: number;
+    songId: string | null;
+    enabled: boolean;
+    onEnabledChange: (v: boolean) => void;
+  }) => {
+    const [beatCount, setBeatCount] = useState(0);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    useEffect(() => {
+      setBeatCount(0);
+      if (!enabled) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        return;
+      }
+      const clampedBpm = Math.max(40, Math.min(240, bpm));
+      const intervalMs = 60000 / clampedBpm;
+      intervalRef.current = setInterval(() => {
+        setBeatCount((c) => c + 1);
+      }, intervalMs);
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      };
+    }, [enabled, bpm, songId]);
+
+    const clampedBpm = Math.max(40, Math.min(240, bpm));
+    const beatInBar = beatCount % 4;
+    const isDownbeat = beatInBar === 0;
+    const beatNumber = beatInBar + 1; // 1–4
+
+    return (
+      <div
+        role="region"
+        aria-label={`Metronome ${enabled ? "on" : "off"}, ${clampedBpm} BPM${enabled ? `, beat ${beatNumber} of 4` : ""}`}
+        className="flex-shrink-0 flex items-center justify-between gap-4 px-5 py-4 sm:py-4.5 border-b border-gray-100 bg-white transition-all duration-300"
+      >
+        <div
+          className={cn(
+            "flex items-center gap-4 sm:gap-5 flex-1 min-w-0 transition-opacity duration-300",
+            !enabled && "opacity-40"
+          )}
+        >
+          <div className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
+            {enabled ? (
+              <>
+                <motion.div
+                  key={`ring-${beatCount}`}
+                  initial={{ scale: 1, opacity: 0.5 }}
+                  animate={{ scale: 1.9, opacity: 0 }}
+                  transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="absolute inset-0 rounded-full border-2 border-red-600 will-change-transform"
+                />
+                <motion.div
+                  key={beatCount}
+                  initial={{ scale: 1, opacity: 1 }}
+                  animate={{
+                    scale: isDownbeat ? [1, 1.3, 1] : [1, 1.12, 1],
+                    opacity: [1, 1, 1],
+                  }}
+                  transition={{
+                    duration: METRONOME_PULSE_MS / 1000,
+                    times: [0, 0.25, 1],
+                    ease: [0.25, 0.46, 0.45, 0.94],
+                  }}
+                  className={cn(
+                    "absolute inset-0 rounded-full will-change-transform",
+                    isDownbeat
+                      ? "bg-red-600 shadow-[0_0_16px_rgba(220,38,38,0.45)]"
+                      : "bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.35)]"
+                  )}
+                />
+              </>
+            ) : (
+              <div className="absolute inset-0 rounded-full bg-gray-200/50" />
+            )}
+          </div>
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-600">
+              Metronome
+            </p>
+            <p className="text-lg sm:text-xl font-bold tabular-nums tracking-tight text-gray-800">
+              {clampedBpm} <span className="text-sm font-medium text-gray-500">BPM</span>
+            </p>
+            {enabled && (
+              <div className="flex gap-1.5 mt-0.5" aria-hidden>
+                {[1, 2, 3, 4].map((n) => (
+                  <span
+                    key={n}
+                    className={cn(
+                      "w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold tabular-nums transition-all duration-150",
+                      n === beatNumber
+                        ? "bg-red-600 text-white"
+                        : "bg-gray-200/80 text-gray-400"
+                    )}
+                  >
+                    {n}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <label
+          className={cn(
+            "flex items-center gap-2.5 cursor-pointer touch-manipulation min-h-[44px] min-w-[44px] justify-end flex-shrink-0 transition-opacity duration-300",
+            !enabled && "opacity-70"
+          )}
+        >
+          <span className="text-[10px] font-medium uppercase tracking-wider text-gray-600">
+            {enabled ? "On" : "Off"}
+          </span>
+          <Switch
+            checked={enabled}
+            onCheckedChange={onEnabledChange}
+            aria-label="Toggle metronome"
+            className={cn(
+              "h-7 w-12 [&>span]:bg-white",
+              enabled
+                ? "data-[state=unchecked]:bg-gray-200/80 data-[state=unchecked]:border-gray-200/80 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+                : "data-[state=unchecked]:bg-gray-200/70 data-[state=unchecked]:border-gray-200/70 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+            )}
+          />
+        </label>
+      </div>
+    );
+  }
+);
+VisualMetronome.displayName = "VisualMetronome";
+
 const BLINK_COLORS = ["#fbbf24", "#ffffff"] as const;
 const BLINK_TIMES = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] as const;
 const BLINK_ANIMATE_COLORS = [
@@ -59,7 +204,11 @@ const BLINK_ANIMATE_COLORS = [
 ] as const;
 
 const CurrentSongDisplay = memo(
-  ({ compact = false, onScrollToCurrent }: { compact?: boolean; onScrollToCurrent?: () => void }) => {
+  ({
+    compact = false,
+    stageMode = false,
+    onScrollToCurrent,
+  }: { compact?: boolean; stageMode?: boolean; onScrollToCurrent?: () => void }) => {
   const { state } = useBandState();
   const { currentSong } = state;
   const [blinkCount, setBlinkCount] = useState(0);
@@ -85,21 +234,29 @@ const CurrentSongDisplay = memo(
 
   const containerClass = compact
     ? "px-3 sm:px-6 py-2 sm:py-2.5"
-    : "px-4 sm:px-8 md:px-12 py-4 sm:py-8 md:py-12 lg:py-16";
-  const labelClass = compact ? "mb-1.5 sm:mb-2" : "mb-2 sm:mb-3 md:mb-4";
-  const dotClass = compact ? "h-2 w-2" : "h-2.5 w-2.5 sm:h-3 sm:w-3";
-  const labelTextClass = compact ? "text-[9px]" : "text-xs sm:text-sm md:text-base";
+    : stageMode
+      ? "px-4 sm:px-8 md:px-12 lg:px-16 py-6 sm:py-10 md:py-12 lg:py-16"
+      : "px-4 sm:px-8 md:px-12 py-4 sm:py-8 md:py-12 lg:py-16";
+  const labelClass = compact ? "mb-1.5 sm:mb-2" : stageMode ? "mb-3 sm:mb-4 md:mb-5" : "mb-2 sm:mb-3 md:mb-4";
+  const dotClass = compact ? "h-2 w-2" : stageMode ? "h-3 w-3 sm:h-3.5 sm:w-3.5" : "h-2.5 w-2.5 sm:h-3 sm:w-3";
+  const labelTextClass = compact ? "text-[9px]" : stageMode ? "text-xs sm:text-sm md:text-base" : "text-xs sm:text-sm md:text-base";
   const titleClass = compact
     ? "text-xl sm:text-2xl md:text-3xl"
-    : "text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl";
-  const artistClass = compact ? "mt-1 text-xs sm:text-sm" : "mt-2 sm:mt-3 text-base sm:text-xl md:text-2xl lg:text-3xl";
-  const badgesClass = compact ? "mt-2" : "mt-4 sm:mt-6 md:mt-8";
+    : stageMode
+      ? "text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl"
+      : "text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl";
+  const artistClass = compact ? "mt-1 text-xs sm:text-sm" : stageMode ? "mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl" : "mt-2 sm:mt-3 text-base sm:text-xl md:text-2xl lg:text-3xl";
+  const badgesClass = compact ? "mt-2" : stageMode ? "mt-6 sm:mt-8 md:mt-10" : "mt-4 sm:mt-6 md:mt-8";
   const badgeClass = compact
     ? "px-2.5 py-0.5 text-sm"
-    : "px-5 sm:px-6 py-2.5 sm:py-3 text-xl sm:text-2xl md:text-3xl";
+    : stageMode
+      ? "px-4 sm:px-6 py-2 sm:py-2.5 text-lg sm:text-xl md:text-2xl lg:text-3xl"
+      : "px-5 sm:px-6 py-2.5 sm:py-3 text-xl sm:text-2xl md:text-3xl";
   const badgeClassMuted = compact
     ? "px-2.5 py-0.5 text-xs"
-    : "px-5 sm:px-6 py-2.5 sm:py-3 text-lg sm:text-xl md:text-2xl";
+    : stageMode
+      ? "px-4 sm:px-6 py-2 sm:py-2.5 text-base sm:text-lg md:text-xl lg:text-2xl"
+      : "px-5 sm:px-6 py-2.5 sm:py-3 text-lg sm:text-xl md:text-2xl";
 
   const isClickable = compact && !!currentSong && !!onScrollToCurrent;
 
@@ -207,6 +364,16 @@ const CurrentSongDisplay = memo(
                     )}
                   >
                     {currentSong.tempo}
+                  </span>
+                )}
+                {currentSong.genre && (
+                  <span
+                    className={cn(
+                      "rounded-full bg-gray-200/90 text-gray-700 font-medium",
+                      badgeClassMuted
+                    )}
+                  >
+                    {currentSong.genre}
                   </span>
                 )}
               </div>
@@ -884,13 +1051,30 @@ SetlistSection.displayName = "SetlistSection";
 
 type SingerViewMode = "setlist" | "lyrics";
 
+const METRONOME_STORAGE_KEY = "band-app-metronome";
+
 const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"]; onLogout: () => void }) => {
   const { isSinger, setIsSinger, hasUpdate, isConnected, isOffline } = useBandUI();
   const { state } = useBandState();
   const [searchQuery, setSearchQuery] = useState("");
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [singerViewMode, setSingerViewMode] = useState<SingerViewMode>("setlist");
+  const [metronomeEnabled, setMetronomeEnabled] = useState(() => {
+    try {
+      return localStorage.getItem(METRONOME_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
   const scrollToCurrentSongRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(METRONOME_STORAGE_KEY, String(metronomeEnabled));
+    } catch {
+      /* ignore */
+    }
+  }, [metronomeEnabled]);
 
   const handleSingerViewToggle = useCallback(() => {
     setSingerViewMode((prev) => (prev === "setlist" ? "lyrics" : "setlist"));
@@ -1084,8 +1268,17 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
               isSinger ? "m-[6px]" : "m-1 sm:m-1.5 flex-1 min-h-0 flex flex-col"
             )}
           >
+            {authRole === "member" && (
+              <VisualMetronome
+                bpm={state.currentSong?.bpm ?? DEFAULT_METRONOME_BPM}
+                songId={state.currentSong?.id ?? null}
+                enabled={metronomeEnabled}
+                onEnabledChange={setMetronomeEnabled}
+              />
+            )}
             <CurrentSongDisplay
               compact={isSinger}
+              stageMode={authRole === "member"}
               onScrollToCurrent={
                 authRole === "singer" && singerViewMode === "setlist"
                   ? () => scrollToCurrentSongRef.current?.()

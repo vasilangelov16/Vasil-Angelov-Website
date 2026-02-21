@@ -85,7 +85,7 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
             if (msg.type === "state" && msg.payload) {
               const remote = msg.payload as BandState;
               setStateRef.current((prev) => {
-                if (remote.lastUpdate > prev.lastUpdate) {
+                if (remote.lastUpdate >= prev.lastUpdate) {
                   setHasUpdateRef.current(true);
                   setTimeout(() => setHasUpdateRef.current(false), 2500);
                   return remote;
@@ -121,7 +121,7 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
       wsRef.current?.close();
       wsRef.current = null;
     };
-  }, [WS_URL]);
+  }, [WS_URL, authRole]);
 
   return { sendUpdate, isConnected, isOffline };
 }
