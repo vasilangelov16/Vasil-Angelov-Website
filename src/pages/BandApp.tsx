@@ -9,7 +9,7 @@ import {
   clearStoredAuth,
   type BandAuth,
 } from "@/components/PinGate";
-import { Music, X, Mic2, Users, Search, LogOut, Sparkles } from "lucide-react";
+import { Music, X, Mic2, Users, Search, LogOut, Sparkles, List, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -30,6 +30,24 @@ const LAYOUT_TWEEN = { duration: 0.45, ease: [0.32, 0.72, 0, 1] as const }; // b
 const APPLE_TAP = { scale: 0.98 };
 const APPLE_EASE = [0.32, 0.72, 0, 1] as const; // Apple-style ease-out
 
+/** Apple-like smooth scroll: ease-out cubic, ~550ms */
+function animateScrollTo(container: HTMLElement, targetTop: number, durationMs = 550) {
+  const start = container.scrollTop;
+  const distance = targetTop - start;
+  if (Math.abs(distance) < 2) return;
+  const startTime = performance.now();
+  const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+
+  const tick = (now: number) => {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / durationMs, 1);
+    const eased = easeOutCubic(progress);
+    container.scrollTop = start + distance * eased;
+    if (progress < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
 const BLINK_COLORS = ["#fbbf24", "#ffffff"] as const;
 const BLINK_TIMES = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] as const;
 const BLINK_ANIMATE_COLORS = [
@@ -40,7 +58,8 @@ const BLINK_ANIMATE_COLORS = [
   ...BLINK_COLORS,
 ] as const;
 
-const CurrentSongDisplay = memo(({ compact = false }: { compact?: boolean }) => {
+const CurrentSongDisplay = memo(
+  ({ compact = false, onScrollToCurrent }: { compact?: boolean; onScrollToCurrent?: () => void }) => {
   const { state } = useBandState();
   const { currentSong } = state;
   const [blinkCount, setBlinkCount] = useState(0);
@@ -82,11 +101,30 @@ const CurrentSongDisplay = memo(({ compact = false }: { compact?: boolean }) => 
     ? "px-2.5 py-0.5 text-xs"
     : "px-5 sm:px-6 py-2.5 sm:py-3 text-lg sm:text-xl md:text-2xl";
 
+  const isClickable = compact && !!currentSong && !!onScrollToCurrent;
+
   return (
-    <div
+    <motion.div
+      role={isClickable ? "button" : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onClick={isClickable ? onScrollToCurrent : undefined}
+      onKeyDown={
+        isClickable
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onScrollToCurrent?.();
+              }
+            }
+          : undefined
+      }
+      whileTap={isClickable ? APPLE_TAP : undefined}
+      transition={APPLE_SPRING}
+      title={isClickable ? "Tap to scroll to song in list" : undefined}
       className={cn(
         "relative w-full overflow-hidden bg-white",
-        !compact && "flex-1 min-h-0 flex flex-col items-center justify-center"
+        !compact && "flex-1 min-h-0 flex flex-col items-center justify-center",
+        isClickable && "cursor-pointer touch-manipulation"
       )}
     >
       <AnimatePresence>
@@ -94,7 +132,7 @@ const CurrentSongDisplay = memo(({ compact = false }: { compact?: boolean }) => 
           <motion.div
             key={`blink-${blinkCount}`}
             initial={{ backgroundColor: BLINK_COLORS[0] }}
-            animate={{ backgroundColor: BLINK_ANIMATE_COLORS }}
+            animate={{ backgroundColor: [...BLINK_ANIMATE_COLORS] }}
             transition={{ duration: 2.2, times: [...BLINK_TIMES], ease: APPLE_EASE }}
             exit={{ opacity: 0, transition: { duration: 0.35, ease: APPLE_EASE } }}
             className="absolute inset-0 z-0"
@@ -193,7 +231,7 @@ const CurrentSongDisplay = memo(({ compact = false }: { compact?: boolean }) => 
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 });
 CurrentSongDisplay.displayName = "CurrentSongDisplay";
@@ -331,6 +369,63 @@ const LyricsModal = memo(
   }
 );
 LyricsModal.displayName = "LyricsModal";
+
+const SingerLyricsView = memo(({ song }: { song: Song | null }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (song?.id && scrollRef.current) {
+      scrollRef.current.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [song?.id]);
+
+  if (!song) {
+    return (
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 bg-gray-50">
+        <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mb-4" strokeWidth={1.5} />
+        <p className="text-gray-500 text-sm sm:text-base text-center font-medium">
+          Select a song to view lyrics
+        </p>
+        <p className="text-gray-400 text-xs sm:text-sm text-center mt-1">
+          Tap a song from the setlist, then switch to Lyrics view
+        </p>
+      </div>
+    );
+  }
+
+  const hasLyrics = !!song.lyrics?.trim();
+
+  return (
+    <div
+      ref={scrollRef}
+      role="region"
+      aria-label={`Lyrics for ${song.title}`}
+      tabIndex={0}
+      className="lyrics-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-inset"
+    >
+      <div className="px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 md:py-10">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+            {song.title}
+          </h2>
+          {song.artist && (
+            <p className="text-base sm:text-lg text-gray-500 mb-6 sm:mb-8">{song.artist}</p>
+          )}
+          {hasLyrics ? (
+            <div className="text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed sm:leading-loose">
+              {formatLyricsWithHighlights(song.lyrics!)}
+            </div>
+          ) : (
+            <div className="py-12 sm:py-16 text-center text-gray-400 text-base sm:text-lg">
+              No lyrics available for this song.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+SingerLyricsView.displayName = "SingerLyricsView";
 
 const SongItem = memo(
   ({
@@ -484,7 +579,15 @@ const SongItem = memo(
 SongItem.displayName = "SongItem";
 
 const SetlistSection = memo(
-  ({ searchQuery, authRole }: { searchQuery: string; authRole: BandAuth["role"] }) => {
+  ({
+    searchQuery,
+    authRole,
+    scrollToCurrentSongRef,
+  }: {
+    searchQuery: string;
+    authRole: BandAuth["role"];
+    scrollToCurrentSongRef?: React.MutableRefObject<(() => void) | null>;
+  }) => {
     const deferredQuery = useDeferredValue(searchQuery);
     const { state, setCurrentSong, reorderSetlistWithSuggestions } = useBandState();
     const { setlist, currentSong } = state;
@@ -579,11 +682,15 @@ const SetlistSection = memo(
         const elRect = (el as HTMLElement).getBoundingClientRect();
         const elTop = container.scrollTop + (elRect.top - containerRect.top);
         const elBottom = container.scrollTop + (elRect.bottom - containerRect.top);
+        let targetTop: number;
         if (elRect.top < containerRect.top) {
-          container.scrollTo({ top: elTop, behavior: "smooth" });
+          targetTop = elTop;
         } else if (elRect.bottom > containerRect.bottom) {
-          container.scrollTo({ top: Math.max(0, elBottom - container.clientHeight), behavior: "smooth" });
+          targetTop = Math.max(0, elBottom - container.clientHeight);
+        } else {
+          return;
         }
+        animateScrollTo(container, targetTop);
       };
 
       if (scrollTarget.type === "song") {
@@ -667,6 +774,25 @@ const SetlistSection = memo(
     },
     [setCurrentSong]
   );
+
+  const scrollToCurrentSong = useCallback(() => {
+    if (!currentSong) return;
+    const index = filteredSongs.findIndex((s) => s.id === currentSong.id);
+    if (index < 0) return;
+    if (index >= visibleCount) {
+      setVisibleCount((prev) => Math.max(prev, index + 1));
+    }
+    setScrollTarget({ type: "song", id: currentSong.id });
+  }, [currentSong, filteredSongs, visibleCount]);
+
+  useEffect(() => {
+    if (scrollToCurrentSongRef) {
+      scrollToCurrentSongRef.current = scrollToCurrentSong;
+      return () => {
+        scrollToCurrentSongRef.current = null;
+      };
+    }
+  }, [scrollToCurrentSong, scrollToCurrentSongRef]);
 
   if (filteredSongs.length === 0) {
     return (
@@ -756,12 +882,19 @@ const SetlistSection = memo(
 );
 SetlistSection.displayName = "SetlistSection";
 
+type SingerViewMode = "setlist" | "lyrics";
+
 const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"]; onLogout: () => void }) => {
   const { isSinger, setIsSinger, hasUpdate, isConnected, isOffline } = useBandUI();
+  const { state } = useBandState();
   const [searchQuery, setSearchQuery] = useState("");
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [singerViewMode, setSingerViewMode] = useState<SingerViewMode>("setlist");
+  const scrollToCurrentSongRef = useRef<(() => void) | null>(null);
 
-  const handleRoleToggle = useCallback(() => setIsSinger((prev) => !prev), [setIsSinger]);
+  const handleSingerViewToggle = useCallback(() => {
+    setSingerViewMode((prev) => (prev === "setlist" ? "lyrics" : "setlist"));
+  }, []);
   const handleSearchChange = useCallback((v: string) => setSearchQuery(v), []);
   const handleSearchClear = useCallback(() => setSearchQuery(""), []);
   const handleCloseLogout = useCallback(() => setShowLogoutDialog(false), []);
@@ -823,18 +956,48 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
           {authRole === "singer" && (
             <motion.button
               type="button"
-              onClick={handleRoleToggle}
+              onClick={handleSingerViewToggle}
               whileTap={APPLE_TAP}
               transition={APPLE_SPRING}
-              aria-pressed={isSinger}
-              aria-label={isSinger ? "Singer mode" : "Member mode"}
+              aria-pressed={singerViewMode === "lyrics"}
+              aria-label={
+                singerViewMode === "setlist"
+                  ? state.currentSong
+                    ? "Switch to lyrics view (song selected)"
+                    : "Switch to lyrics view"
+                  : "Switch to setlist view"
+              }
+              title={
+                singerViewMode === "setlist"
+                  ? state.currentSong
+                    ? "Show lyrics for selected song"
+                    : "Show lyrics"
+                  : "Show setlist"
+              }
               className={cn(
-                "flex items-center gap-1 px-2 py-1 sm:px-2 sm:py-0.5 rounded-full text-xs font-medium transition-colors h-8 touch-manipulation",
-                isSinger ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600"
+                "relative flex items-center gap-1.5 px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-full text-xs font-medium transition-colors h-8 min-w-[44px] sm:min-w-0 touch-manipulation overflow-visible",
+                singerViewMode === "lyrics"
+                  ? "bg-amber-500 text-amber-950"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               )}
             >
-              {isSinger ? <Mic2 className="w-3 h-3" /> : <Users className="w-3 h-3" />}
-              <span>{isSinger ? "Singer" : "Member"}</span>
+              {singerViewMode === "setlist" ? (
+                <FileText className="w-3.5 h-3.5 sm:w-3 sm:h-3" strokeWidth={2} />
+              ) : (
+                <List className="w-3.5 h-3.5 sm:w-3 sm:h-3" strokeWidth={2} />
+              )}
+              <span className="sm:inline">{singerViewMode === "setlist" ? "Lyrics" : "Setlist"}</span>
+              {singerViewMode === "setlist" && state.currentSong && (
+                <span
+                  className={cn(
+                    "absolute top-0 right-0 w-2.5 h-2.5 rounded-full shadow-sm border-2 border-white",
+                    state.currentSong.lyrics?.trim()
+                      ? "bg-amber-500"
+                      : "bg-gray-400"
+                  )}
+                  aria-hidden
+                />
+              )}
             </motion.button>
           )}
           {authRole === "member" && (
@@ -901,30 +1064,39 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
         )}
       </AnimatePresence>
 
-      <div
-        className={cn(
-          "relative",
-          isSinger ? "mx-3 my-2 flex-shrink-0" : "mx-1.5 sm:mx-2 my-1 sm:my-1.5 flex-1 min-h-0 flex flex-col"
-        )}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 rounded-2xl" />
+      {!(authRole === "singer" && singerViewMode === "lyrics") && (
         <div
           className={cn(
-            "absolute bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900",
-            isSinger ? "inset-[3px] rounded-xl" : "inset-[2px] rounded-[10px]"
-          )}
-        />
-        <div
-          className={cn(
-            "relative rounded-lg overflow-hidden",
-            isSinger ? "m-[6px]" : "m-1 sm:m-1.5 flex-1 min-h-0 flex flex-col"
+            "relative",
+            isSinger ? "mx-3 my-2 flex-shrink-0" : "mx-1.5 sm:mx-2 my-1 sm:my-1.5 flex-1 min-h-0 flex flex-col"
           )}
         >
-          <CurrentSongDisplay compact={isSinger} />
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 rounded-2xl" />
+          <div
+            className={cn(
+              "absolute bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900",
+              isSinger ? "inset-[3px] rounded-xl" : "inset-[2px] rounded-[10px]"
+            )}
+          />
+          <div
+            className={cn(
+              "relative rounded-lg overflow-hidden",
+              isSinger ? "m-[6px]" : "m-1 sm:m-1.5 flex-1 min-h-0 flex flex-col"
+            )}
+          >
+            <CurrentSongDisplay
+              compact={isSinger}
+              onScrollToCurrent={
+                authRole === "singer" && singerViewMode === "setlist"
+                  ? () => scrollToCurrentSongRef.current?.()
+                  : undefined
+              }
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      {isSinger && (
+      {authRole === "singer" && singerViewMode === "setlist" && (
         <>
           <div className="flex-shrink-0 px-2 py-1.5 bg-gray-50">
             <SearchBar
@@ -933,8 +1105,17 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
               onClear={handleSearchClear}
             />
           </div>
-          <SetlistSection searchQuery={searchQuery} authRole={authRole} />
+          <SetlistSection
+            searchQuery={searchQuery}
+            authRole={authRole}
+            scrollToCurrentSongRef={scrollToCurrentSongRef}
+          />
         </>
+      )}
+      {authRole === "singer" && singerViewMode === "lyrics" && (
+        <div className="flex-1 min-h-0 flex flex-col bg-white">
+          <SingerLyricsView song={state.currentSong} />
+        </div>
       )}
     </div>
   );

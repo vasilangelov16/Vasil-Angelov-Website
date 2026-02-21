@@ -80,15 +80,34 @@ If not auto-detected, set:
 
 ### 2.3 Environment Variables
 
-In **Settings** → **Environment Variables**:
+**Where to add them:** Vercel Dashboard → Your Project → **Settings** (top nav) → **Environment Variables** (left sidebar).
 
 | Key | Value | Environment |
 |-----|-------|-------------|
 | `VITE_SINGER_PIN` | Your singer PIN (e.g. 4–6 digits) | Production, Preview |
 | `VITE_MEMBER_PIN` | Your member PIN | Production, Preview |
-| `VITE_WS_URL` | `wss://YOUR-RAILWAY-URL.up.railway.app/ws` | Production, Preview |
+| `VITE_WS_URL` | See below | Production, Preview |
 
-Replace `YOUR-RAILWAY-URL` with your Railway domain from Part 1.5.
+**Where to get `VITE_WS_URL`:**
+
+1. Go to [railway.app](https://railway.app) → your project
+2. Click your **service** (the backend)
+3. Open the **Settings** tab
+4. Scroll to **Networking** → **Public Networking**
+5. Click **Generate Domain** (if you haven’t already)
+6. Copy the domain, e.g. `band-app-server-production-a1b2.up.railway.app`
+7. Build the WebSocket URL: `wss://` + that domain + `/ws`
+   - Example: `wss://band-app-server-production-a1b2.up.railway.app/ws`
+
+**Where to insert it in Vercel:**
+
+1. Vercel → your project → **Settings** → **Environment Variables**
+2. Click **Add New** (or **Add**)
+3. **Key:** `VITE_WS_URL`
+4. **Value:** `wss://YOUR-RAILWAY-DOMAIN.up.railway.app/ws` (paste your actual URL)
+5. **Environments:** tick **Production** and **Preview**
+6. Click **Save**
+7. **Redeploy** the project (Deployments → ⋮ on latest → Redeploy) so the new variable is baked into the build
 
 ### 2.4 Add Custom Domain
 
