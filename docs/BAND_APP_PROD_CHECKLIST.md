@@ -71,4 +71,4 @@ Use this checklist before deploying the Band Setlist app to band.vasilangelov.co
 - Real-time sync via WebSocket
 - PIN auth (Singer/Member), 24h session, rate limiting
 - **Member view**: Visual metronome (BPM from song, beat 1–4 indicator, On/Off toggle)
-- **Member view**: Stage-optimized Now Playing (large text, key, BPM, tempo, genre)
+- **Member view**: Stage-optimized Now Playing (large text, key, BPM, tempo)

@@ -366,16 +366,6 @@ const CurrentSongDisplay = memo(
                     {currentSong.tempo}
                   </span>
                 )}
-                {currentSong.genre && (
-                  <span
-                    className={cn(
-                      "rounded-full bg-gray-200/90 text-gray-700 font-medium",
-                      badgeClassMuted
-                    )}
-                  >
-                    {currentSong.genre}
-                  </span>
-                )}
               </div>
             </motion.div>
           ) : (
