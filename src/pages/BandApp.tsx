@@ -10,7 +10,7 @@ import {
   clearStoredAuth,
   type BandAuth,
 } from "@/components/PinGate";
-import { Music, X, Mic2, Users, Search, LogOut, Sparkles, List, FileText } from "lucide-react";
+import { Music, X, Mic2, Users, Search, LogOut, Sparkles, List, FileText, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -31,6 +31,7 @@ const LAYOUT_SPRING = { type: "spring" as const, stiffness: 180, damping: 22 }; 
 const LAYOUT_TWEEN = { duration: 0.45, ease: [0.32, 0.72, 0, 1] as const }; // buttery reorder
 const APPLE_TAP = { scale: 0.98 };
 const APPLE_EASE = [0.32, 0.72, 0, 1] as const; // Apple-style ease-out
+const FADE_DURATION = 0.25; // Short, smooth crossfades
 
 /** Apple-like smooth scroll: ease-out cubic, ~550ms */
 function animateScrollTo(container: HTMLElement, targetTop: number, durationMs = 550) {
@@ -99,7 +100,7 @@ const VisualMetronome = memo(
       <div
         role="region"
         aria-label={`Metronome ${enabled ? "on" : "off"}, ${clampedBpm} BPM`}
-        className="flex-shrink-0 flex items-center justify-between gap-4 px-5 py-4 sm:py-4.5 border-b border-gray-100 bg-white transition-all duration-300"
+        className="flex-shrink-0 flex items-center justify-between gap-4 px-5 py-3.5 border-b border-gray-100 bg-white transition-all duration-300 ease-out"
       >
         <div
           className={cn(
@@ -285,15 +286,24 @@ const CurrentSongDisplay = memo(
         )}
       </AnimatePresence>
 
-      <div className={cn("relative z-10 text-center w-full", containerClass)}>
-        <AnimatePresence mode="wait">
+      <div
+        className={cn(
+          "relative z-10 text-center w-full",
+          compact && "min-h-[100px]",
+          !compact && stageMode && "min-h-[200px] sm:min-h-[240px]",
+          !compact && !stageMode && "min-h-[140px] sm:min-h-[180px]",
+          containerClass
+        )}
+      >
+        <AnimatePresence mode="sync">
           {currentSong ? (
             <motion.div
               key={currentSong.id}
-              initial={{ opacity: 0, y: 8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.98 }}
-              transition={APPLE_SPRING_GENTLE}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
+              className="absolute inset-0 flex flex-col items-center justify-center"
             >
               <div className={cn("inline-flex items-center gap-1.5", labelClass)}>
                 <span className={cn("relative flex", dotClass)}>
@@ -360,8 +370,9 @@ const CurrentSongDisplay = memo(
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, ease: APPLE_EASE }}
-              className={compact ? "py-4" : "py-12 sm:py-16"}
+              exit={{ opacity: 0 }}
+              transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
+              className="absolute inset-0 flex flex-col items-center justify-center"
             >
               <Music
                 className={cn(
@@ -650,7 +661,7 @@ const SongItem = memo(
           transition={APPLE_SPRING_TIGHT}
           title="Double-tap for lyrics"
           className={cn(
-            "w-full text-left rounded-lg transition-colors duration-100 flex items-center justify-between gap-2 touch-manipulation",
+            "w-full text-left rounded-lg transition-colors duration-200 ease-out flex items-center justify-between gap-2 touch-manipulation",
             isSingerView ? "px-3 py-3 sm:py-2 min-h-[48px] sm:min-h-0" : "px-2.5 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0",
             isActive
               ? "bg-gray-900 text-white"
@@ -1030,6 +1041,7 @@ SetlistSection.displayName = "SetlistSection";
 type SingerViewMode = "setlist" | "lyrics";
 
 const METRONOME_STORAGE_KEY = "band-app-metronome";
+const METRONOME_VISIBLE_STORAGE_KEY = "band-app-metronome-visible";
 
 const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"]; onLogout: () => void }) => {
   const { isSinger, setIsSinger, hasUpdate, isConnected, isOffline } = useBandUI();
@@ -1044,6 +1056,14 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
       return false;
     }
   });
+  const [metronomeVisible, setMetronomeVisible] = useState(() => {
+    try {
+      const stored = localStorage.getItem(METRONOME_VISIBLE_STORAGE_KEY);
+      return stored === null || stored === "true";
+    } catch {
+      return true;
+    }
+  });
   const scrollToCurrentSongRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -1053,6 +1073,14 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
       /* ignore */
     }
   }, [metronomeEnabled]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(METRONOME_VISIBLE_STORAGE_KEY, String(metronomeVisible));
+    } catch {
+      /* ignore */
+    }
+  }, [metronomeVisible]);
 
   const handleSingerViewToggle = useCallback(() => {
     setSingerViewMode((prev) => (prev === "setlist" ? "lyrics" : "setlist"));
@@ -1067,14 +1095,14 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
 
   return (
     <div className="h-[100dvh] min-h-[100dvh] bg-gray-50 flex flex-col overflow-hidden">
-      <header className="flex-shrink-0 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between bg-white border-b border-gray-200 safe-area-top">
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          <Music className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" aria-hidden />
-          <span className="text-gray-900 font-semibold text-sm sm:text-base">Setlist</span>
+      <header className="flex-shrink-0 px-3 py-2 sm:px-4 sm:py-2 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white border-b border-gray-200 safe-area-top transition-colors duration-200">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <Music className="w-4 h-4 text-primary shrink-0" aria-hidden />
+          <span className="text-gray-900 font-semibold text-sm truncate">Setlist</span>
           {hasWebSocket() && (
             <span
               className={cn(
-                "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium",
+                "flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium shrink-0",
                 isConnected
                   ? "bg-emerald-100 text-emerald-700"
                   : isOffline
@@ -1096,7 +1124,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                   isConnected ? "bg-emerald-500" : isOffline ? "bg-gray-400" : "bg-amber-500 animate-pulse"
                 )}
               />
-              {isConnected ? "Live" : isOffline ? "Offline" : "Connecting"}
+              <span className="hidden sm:inline">{isConnected ? "Live" : isOffline ? "Offline" : "Connecting"}</span>
             </span>
           )}
           <AnimatePresence>
@@ -1107,14 +1135,14 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={APPLE_SPRING}
-                className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-200 text-amber-900"
+                className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-200 text-amber-900 shrink-0"
               >
                 Synced
               </motion.span>
             )}
           </AnimatePresence>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {authRole === "singer" && (
             <motion.button
               type="button"
@@ -1137,7 +1165,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                   : "Show setlist"
               }
               className={cn(
-                "relative flex items-center gap-1.5 px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-full text-xs font-medium transition-colors h-8 min-w-[44px] sm:min-w-0 touch-manipulation overflow-visible",
+                "relative flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-colors h-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-8 justify-center touch-manipulation overflow-visible",
                 singerViewMode === "lyrics"
                   ? "bg-amber-500 text-amber-950"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -1163,10 +1191,35 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             </motion.button>
           )}
           {authRole === "member" && (
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-              <Users className="w-3 h-3" />
-              Member
-            </span>
+            <div className="flex items-center gap-1.5">
+              <motion.button
+                type="button"
+                onClick={() => {
+                  setMetronomeVisible((v) => {
+                    const next = !v;
+                    if (next) setMetronomeEnabled(true);
+                    return next;
+                  });
+                }}
+                whileTap={APPLE_TAP}
+                transition={APPLE_SPRING}
+                aria-label={metronomeVisible ? "Hide metronome" : "Show metronome"}
+                aria-pressed={metronomeVisible}
+                title={metronomeVisible ? "Hide metronome" : "Show metronome"}
+                className={cn(
+                  "flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-lg touch-manipulation transition-colors duration-200 ease-out",
+                  metronomeVisible
+                    ? "bg-red-100 text-red-600 hover:bg-red-200"
+                    : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-500"
+                )}
+              >
+                <Timer size={18} className="shrink-0" strokeWidth={2} aria-hidden />
+              </motion.button>
+              <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 shrink-0">
+                <Users className="w-3 h-3 shrink-0" />
+                <span className="hidden sm:inline">Member</span>
+              </span>
+            </div>
           )}
           <motion.button
             type="button"
@@ -1242,17 +1295,30 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
           />
           <div
             className={cn(
-              "relative rounded-lg overflow-hidden",
+              "relative rounded-lg overflow-hidden bg-white",
               isSinger ? "m-[6px]" : "m-1 sm:m-1.5 flex-1 min-h-0 flex flex-col"
             )}
           >
             {authRole === "member" && (
-              <VisualMetronome
-                bpm={state.currentSong?.bpm ?? DEFAULT_METRONOME_BPM}
-                songId={state.currentSong?.id ?? null}
-                enabled={metronomeEnabled}
-                onEnabledChange={setMetronomeEnabled}
-              />
+              <AnimatePresence mode="sync">
+                {metronomeVisible && (
+                  <motion.div
+                    key="metronome"
+                    initial={{ opacity: 0, maxHeight: 0 }}
+                    animate={{ opacity: 1, maxHeight: 120 }}
+                    exit={{ opacity: 0, maxHeight: 0 }}
+                    transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
+                    className="overflow-hidden"
+                  >
+                    <VisualMetronome
+                      bpm={state.currentSong?.bpm ?? DEFAULT_METRONOME_BPM}
+                      songId={state.currentSong?.id ?? null}
+                      enabled={metronomeEnabled}
+                      onEnabledChange={setMetronomeEnabled}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             )}
             <CurrentSongDisplay
               compact={isSinger}
@@ -1267,25 +1333,44 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
         </div>
       )}
 
-      {authRole === "singer" && singerViewMode === "setlist" && (
-        <>
-          <div className="flex-shrink-0 px-2 py-1.5 bg-gray-50">
-            <SearchBar
-              value={searchQuery}
-              onChange={handleSearchChange}
-              onClear={handleSearchClear}
-            />
-          </div>
-          <SetlistSection
-            searchQuery={searchQuery}
-            authRole={authRole}
-            scrollToCurrentSongRef={scrollToCurrentSongRef}
-          />
-        </>
-      )}
-      {authRole === "singer" && singerViewMode === "lyrics" && (
-        <div className="flex-1 min-h-0 flex flex-col bg-white">
-          <SingerLyricsView song={state.currentSong} />
+      {authRole === "singer" && (
+        <div className="flex-1 min-h-0 flex flex-col bg-white relative overflow-hidden">
+          <AnimatePresence mode="sync">
+            {singerViewMode === "setlist" ? (
+              <motion.div
+                key="setlist"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
+                className="absolute inset-0 flex flex-col"
+              >
+                <div className="flex-shrink-0 px-2 py-1.5 bg-gray-50">
+                  <SearchBar
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onClear={handleSearchClear}
+                  />
+                </div>
+                <SetlistSection
+                  searchQuery={searchQuery}
+                  authRole={authRole}
+                  scrollToCurrentSongRef={scrollToCurrentSongRef}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="lyrics"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
+                className="absolute inset-0 flex flex-col"
+              >
+                <SingerLyricsView song={state.currentSong} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>
