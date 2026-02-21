@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, memo, useCallback, useDeferredVal
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { BandProvider, useBandState, useBandUI, type Song } from "@/context/BandContext";
 import { hasWebSocket } from "@/hooks/useBandWebSocket";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
   PinGate,
   getStoredAuth,
@@ -66,6 +67,7 @@ const VisualMetronome = memo(
   }) => {
     const [beatCount, setBeatCount] = useState(0);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const reducedMotion = useReducedMotion();
 
     useEffect(() => {
       setBeatCount(0);
@@ -92,12 +94,11 @@ const VisualMetronome = memo(
     const clampedBpm = Math.max(40, Math.min(240, bpm));
     const beatInBar = beatCount % 4;
     const isDownbeat = beatInBar === 0;
-    const beatNumber = beatInBar + 1; // 1–4
 
     return (
       <div
         role="region"
-        aria-label={`Metronome ${enabled ? "on" : "off"}, ${clampedBpm} BPM${enabled ? `, beat ${beatNumber} of 4` : ""}`}
+        aria-label={`Metronome ${enabled ? "on" : "off"}, ${clampedBpm} BPM`}
         className="flex-shrink-0 flex items-center justify-between gap-4 px-5 py-4 sm:py-4.5 border-b border-gray-100 bg-white transition-all duration-300"
       >
         <div
@@ -109,19 +110,21 @@ const VisualMetronome = memo(
           <div className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
             {enabled ? (
               <>
-                <motion.div
-                  key={`ring-${beatCount}`}
-                  initial={{ scale: 1, opacity: 0.5 }}
-                  animate={{ scale: 1.9, opacity: 0 }}
-                  transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  className="absolute inset-0 rounded-full border-2 border-red-600 will-change-transform"
-                />
+                {!reducedMotion && (
+                  <motion.div
+                    key={`ring-${beatCount}`}
+                    initial={{ scale: 1, opacity: 0.5 }}
+                    animate={{ scale: 1.9, opacity: 0 }}
+                    transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    className="absolute inset-0 rounded-full border-2 border-red-600 will-change-transform"
+                  />
+                )}
                 <motion.div
                   key={beatCount}
                   initial={{ scale: 1, opacity: 1 }}
                   animate={{
-                    scale: isDownbeat ? [1, 1.3, 1] : [1, 1.12, 1],
-                    opacity: [1, 1, 1],
+                    scale: reducedMotion ? [1, 1, 1] : isDownbeat ? [1, 1.3, 1] : [1, 1.12, 1],
+                    opacity: reducedMotion ? [1, 0.85, 1] : [1, 1, 1],
                   }}
                   transition={{
                     duration: METRONOME_PULSE_MS / 1000,
@@ -129,7 +132,8 @@ const VisualMetronome = memo(
                     ease: [0.25, 0.46, 0.45, 0.94],
                   }}
                   className={cn(
-                    "absolute inset-0 rounded-full will-change-transform",
+                    "absolute inset-0 rounded-full",
+                    !reducedMotion && "will-change-transform",
                     isDownbeat
                       ? "bg-red-600 shadow-[0_0_16px_rgba(220,38,38,0.45)]"
                       : "bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.35)]"
@@ -147,23 +151,6 @@ const VisualMetronome = memo(
             <p className="text-lg sm:text-xl font-bold tabular-nums tracking-tight text-gray-800">
               {clampedBpm} <span className="text-sm font-medium text-gray-500">BPM</span>
             </p>
-            {enabled && (
-              <div className="flex gap-1.5 mt-0.5" aria-hidden>
-                {[1, 2, 3, 4].map((n) => (
-                  <span
-                    key={n}
-                    className={cn(
-                      "w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold tabular-nums transition-all duration-150",
-                      n === beatNumber
-                        ? "bg-red-600 text-white"
-                        : "bg-gray-200/80 text-gray-400"
-                    )}
-                  >
-                    {n}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         </div>
         <label
@@ -211,6 +198,7 @@ const CurrentSongDisplay = memo(
   }: { compact?: boolean; stageMode?: boolean; onScrollToCurrent?: () => void }) => {
   const { state } = useBandState();
   const { currentSong } = state;
+  const reducedMotion = useReducedMotion();
   const [blinkCount, setBlinkCount] = useState(0);
   const [isBlinking, setIsBlinking] = useState(false);
   const prevSongIdRef = useRef<string | null>(null);
@@ -285,7 +273,7 @@ const CurrentSongDisplay = memo(
       )}
     >
       <AnimatePresence>
-        {isBlinking && (
+        {isBlinking && !reducedMotion && (
           <motion.div
             key={`blink-${blinkCount}`}
             initial={{ backgroundColor: BLINK_COLORS[0] }}
