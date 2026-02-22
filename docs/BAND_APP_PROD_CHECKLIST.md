@@ -66,6 +66,7 @@ Use this checklist before deploying the Band Setlist app to band.vasilangelov.co
 - AI suggestions (English→English, Balkan→Balkan)
 - Key, tempo, genre, BPM per song
 - Lyrics modal (double-tap song) + Singer full-screen lyrics view (Setlist/Lyrics toggle)
+- Lyrics font controls: zoom (+/−), bold toggle (B), persisted in localStorage, synced between modal and full view
 - Lyrics indicator on toggle when song selected (amber = has lyrics, gray = none)
 - Tap Now Playing to scroll list to selected song (Apple-like smooth scroll)
 - Real-time sync via WebSocket

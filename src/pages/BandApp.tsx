@@ -3,6 +3,7 @@ import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { BandProvider, useBandState, useBandUI, type Song } from "@/context/BandContext";
 import { hasWebSocket } from "@/hooks/useBandWebSocket";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useLyricsFontSettings, LYRICS_FONT_CLASSES, type LyricsFontSize } from "@/hooks/useLyricsFontSettings";
 import {
   PinGate,
   getStoredAuth,
@@ -10,7 +11,7 @@ import {
   clearStoredAuth,
   type BandAuth,
 } from "@/components/PinGate";
-import { Music, X, Mic2, Users, Search, LogOut, Sparkles, List, FileText, Timer } from "lucide-react";
+import { Music, X, Mic2, Users, Search, LogOut, Sparkles, List, FileText, Timer, Type } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -222,27 +223,27 @@ const CurrentSongDisplay = memo(
   }, [currentSong?.id]);
 
   const containerClass = compact
-    ? "px-3 sm:px-6 py-2 sm:py-2.5"
+    ? "px-4 sm:px-5 py-2"
     : stageMode
-      ? "px-4 sm:px-8 md:px-12 lg:px-16 py-6 sm:py-10 md:py-12 lg:py-16"
-      : "px-4 sm:px-8 md:px-12 py-4 sm:py-8 md:py-12 lg:py-16";
-  const labelClass = compact ? "mb-1.5 sm:mb-2" : stageMode ? "mb-3 sm:mb-4 md:mb-5" : "mb-2 sm:mb-3 md:mb-4";
-  const dotClass = compact ? "h-2 w-2" : stageMode ? "h-3 w-3 sm:h-3.5 sm:w-3.5" : "h-2.5 w-2.5 sm:h-3 sm:w-3";
-  const labelTextClass = compact ? "text-[9px]" : stageMode ? "text-xs sm:text-sm md:text-base" : "text-xs sm:text-sm md:text-base";
+      ? "px-6 sm:px-10 md:px-14 lg:px-20 py-6 sm:py-10 md:py-12 lg:py-16"
+      : "px-6 sm:px-10 md:px-14 py-4 sm:py-8 md:py-12 lg:py-16";
+  const labelClass = compact ? "mb-1 sm:mb-1.5" : stageMode ? "mb-3 sm:mb-4 md:mb-5" : "mb-2 sm:mb-3 md:mb-4";
+  const dotClass = compact ? "h-1.5 w-1.5" : stageMode ? "h-3 w-3 sm:h-3.5 sm:w-3.5" : "h-2.5 w-2.5 sm:h-3 sm:w-3";
+  const labelTextClass = compact ? "text-[8px]" : stageMode ? "text-xs sm:text-sm md:text-base" : "text-xs sm:text-sm md:text-base";
   const titleClass = compact
-    ? "text-xl sm:text-2xl md:text-3xl"
+    ? "text-lg sm:text-xl md:text-2xl"
     : stageMode
       ? "text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl"
       : "text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl";
-  const artistClass = compact ? "mt-1 text-xs sm:text-sm" : stageMode ? "mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl" : "mt-2 sm:mt-3 text-base sm:text-xl md:text-2xl lg:text-3xl";
-  const badgesClass = compact ? "mt-2" : stageMode ? "mt-6 sm:mt-8 md:mt-10" : "mt-4 sm:mt-6 md:mt-8";
+  const artistClass = compact ? "mt-0.5 text-[10px] sm:text-xs" : stageMode ? "mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl" : "mt-2 sm:mt-3 text-base sm:text-xl md:text-2xl lg:text-3xl";
+  const badgesClass = compact ? "mt-1 sm:mt-1.5" : stageMode ? "mt-6 sm:mt-8 md:mt-10" : "mt-4 sm:mt-6 md:mt-8";
   const badgeClass = compact
-    ? "px-2.5 py-0.5 text-sm"
+    ? "px-1.5 py-0.5 text-[10px]"
     : stageMode
       ? "px-4 sm:px-6 py-2 sm:py-2.5 text-lg sm:text-xl md:text-2xl lg:text-3xl"
       : "px-5 sm:px-6 py-2.5 sm:py-3 text-xl sm:text-2xl md:text-3xl";
   const badgeClassMuted = compact
-    ? "px-2.5 py-0.5 text-xs"
+    ? "px-1.5 py-0.5 text-[9px]"
     : stageMode
       ? "px-4 sm:px-6 py-2 sm:py-2.5 text-base sm:text-lg md:text-xl lg:text-2xl"
       : "px-5 sm:px-6 py-2.5 sm:py-3 text-lg sm:text-xl md:text-2xl";
@@ -268,9 +269,10 @@ const CurrentSongDisplay = memo(
       transition={APPLE_SPRING}
       title={isClickable ? "Tap to scroll to song in list" : undefined}
       className={cn(
-        "relative w-full overflow-hidden bg-white",
-        !compact && "flex-1 min-h-0 flex flex-col items-center justify-center",
-        isClickable && "cursor-pointer touch-manipulation"
+        "relative w-full overflow-hidden",
+        compact && "bg-gray-50/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+        !compact && "bg-white flex-1 min-h-0 flex flex-col items-center justify-center",
+        isClickable && "cursor-pointer touch-manipulation active:bg-gray-100/50"
       )}
     >
       <AnimatePresence>
@@ -281,15 +283,19 @@ const CurrentSongDisplay = memo(
             animate={{ backgroundColor: [...BLINK_ANIMATE_COLORS] }}
             transition={{ duration: 2.2, times: [...BLINK_TIMES], ease: APPLE_EASE }}
             exit={{ opacity: 0, transition: { duration: 0.35, ease: APPLE_EASE } }}
-            className="absolute inset-0 z-0"
+            className={cn(
+              "absolute inset-0 z-0",
+              compact ? "rounded-t-lg" : "rounded-lg"
+            )}
           />
         )}
       </AnimatePresence>
 
       <div
         className={cn(
-          "relative z-10 text-center w-full",
-          compact && "min-h-[100px]",
+          "relative z-10 w-full",
+          compact && "min-h-[48px] border-b border-gray-200/80 text-left",
+          !compact && "text-center",
           !compact && stageMode && "min-h-[200px] sm:min-h-[240px]",
           !compact && !stageMode && "min-h-[140px] sm:min-h-[180px]",
           containerClass
@@ -303,68 +309,107 @@ const CurrentSongDisplay = memo(
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
-              className="absolute inset-0 flex flex-col items-center justify-center"
-            >
-              <div className={cn("inline-flex items-center gap-1.5", labelClass)}>
-                <span className={cn("relative flex", dotClass)}>
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600" />
-                </span>
-                <span
-                  className={cn(
-                    "text-emerald-700 font-bold uppercase tracking-[0.15em]",
-                    labelTextClass
-                  )}
-                >
-                  Now Playing
-                </span>
-              </div>
-
-              <h1
-                className={cn(
-                  "font-serif font-black text-gray-950 leading-[1.1] tracking-tight",
-                  titleClass
-                )}
-              >
-                {currentSong.title}
-              </h1>
-
-              {currentSong.artist && (
-                <p className={cn("text-gray-500", artistClass)}>{currentSong.artist}</p>
+              className={cn(
+                "absolute inset-0 w-full flex items-center gap-2.5 sm:gap-3",
+                compact
+                  ? "flex-row justify-start text-left px-5 sm:px-6"
+                  : "flex-col justify-center px-6 sm:px-10 md:px-14 lg:px-20"
               )}
+            >
+              {compact ? (
+                <>
+                  <span className="relative flex shrink-0 h-2 w-2">
+                    {!reducedMotion && (
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60" />
+                    )}
+                    <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600 ring-2 ring-emerald-500/20" />
+                  </span>
+                  <h1
+                    className="font-serif font-black text-gray-950 truncate flex-1 min-w-0 text-[16px] sm:text-[18px] leading-tight tracking-tight drop-shadow-sm"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
+                    {currentSong.title}
+                  </h1>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {currentSong.key && (
+                      <span className="rounded-md bg-gray-900 px-2.5 py-0.5 text-[11px] sm:text-xs font-bold text-white tabular-nums shadow-sm">
+                        {currentSong.key}
+                      </span>
+                    )}
+                    {currentSong.bpm && (
+                      <span className="text-[11px] sm:text-xs font-medium text-gray-500 tabular-nums">
+                        {currentSong.bpm}
+                      </span>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={cn("inline-flex items-center gap-1.5", labelClass)}>
+                    <span className={cn("relative flex", dotClass)}>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600" />
+                    </span>
+                    <span
+                      className={cn(
+                        "text-emerald-700 font-bold uppercase tracking-[0.15em]",
+                        labelTextClass
+                      )}
+                    >
+                      Now Playing
+                    </span>
+                  </div>
 
-              <div className={cn("flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap", badgesClass)}>
-                {currentSong.key && (
-                  <span
+                  <h1
                     className={cn(
-                      "rounded-full bg-gray-900 text-white font-bold",
-                      badgeClass
+                      "font-serif font-black text-gray-950 leading-[1.1] tracking-tight",
+                      titleClass
                     )}
+                    aria-live="polite"
+                    aria-atomic="true"
                   >
-                    {currentSong.key}
-                  </span>
-                )}
-                {currentSong.bpm && (
-                  <span
-                    className={cn(
-                      "rounded-full bg-gray-100 text-gray-600 font-semibold",
-                      badgeClassMuted
+                    {currentSong.title}
+                  </h1>
+
+                  {currentSong.artist && (
+                    <p className={cn("text-gray-500", artistClass)}>{currentSong.artist}</p>
+                  )}
+
+                  <div className={cn("flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap", badgesClass)}>
+                    {currentSong.key && (
+                      <span
+                        className={cn(
+                          "rounded-full bg-gray-900 text-white font-bold",
+                          badgeClass
+                        )}
+                      >
+                        {currentSong.key}
+                      </span>
                     )}
-                  >
-                    {currentSong.bpm} BPM
-                  </span>
-                )}
-                {currentSong.tempo && (
-                  <span
-                    className={cn(
-                      "rounded-full bg-amber-400 text-amber-950 font-bold",
-                      badgeClassMuted
+                    {currentSong.bpm && (
+                      <span
+                        className={cn(
+                          "rounded-full bg-gray-100 text-gray-600 font-semibold",
+                          badgeClassMuted
+                        )}
+                      >
+                        {currentSong.bpm} BPM
+                      </span>
                     )}
-                  >
-                    {currentSong.tempo}
-                  </span>
-                )}
-              </div>
+                    {currentSong.tempo && (
+                      <span
+                        className={cn(
+                          "rounded-full bg-amber-400 text-amber-950 font-bold",
+                          badgeClassMuted
+                        )}
+                      >
+                        {currentSong.tempo}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
             </motion.div>
           ) : (
             <motion.div
@@ -372,15 +417,18 @@ const CurrentSongDisplay = memo(
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
-              className="absolute inset-0 flex flex-col items-center justify-center"
+              className={cn(
+                "absolute inset-0 flex items-center w-full",
+                compact ? "flex-row gap-2.5 justify-start px-5 sm:px-6" : "flex-col justify-center px-6 sm:px-10"
+              )}
             >
               <Music
                 className={cn(
-                  "mx-auto text-gray-300 mb-1",
-                  compact ? "w-6 h-6" : "w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24"
+                  "text-gray-300 shrink-0",
+                  compact ? "w-5 h-5" : "mb-1 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24"
                 )}
               />
-              <p className={cn("text-gray-400 font-serif", compact ? "text-sm" : "text-base sm:text-lg")}>
+              <p className={cn("text-gray-400 font-medium", compact ? "text-sm" : "text-base sm:text-lg font-serif")}>
                 {compact ? "Tap a song below" : "Select a song from the setlist"}
               </p>
             </motion.div>
@@ -464,9 +512,84 @@ function formatLyricsWithHighlights(lyrics: string) {
   });
 }
 
+const LyricsFontToolbar = memo(
+  ({
+    fontSize,
+    isBold,
+    onAdjustFontSize,
+    onToggleBold,
+    className,
+  }: {
+    fontSize: LyricsFontSize;
+    isBold: boolean;
+    onAdjustFontSize: (delta: 1 | -1) => void;
+    onToggleBold: () => void;
+    className?: string;
+  }) => (
+    <div className={cn("flex items-center justify-end gap-3 sm:gap-4", className)}>
+      <div className="flex items-center gap-0.5" role="group" aria-label="Font size">
+        <Type className="w-3.5 h-3.5 text-gray-400 mr-1 shrink-0" aria-hidden />
+        <motion.button
+          type="button"
+          onClick={() => onAdjustFontSize(-1)}
+          disabled={fontSize === "small"}
+          whileTap={APPLE_TAP}
+          transition={APPLE_SPRING}
+          aria-label="Decrease font size"
+          title="Smaller text"
+          className={cn(
+            "min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-l-lg text-base font-medium transition-colors touch-manipulation",
+            fontSize === "small"
+              ? "text-gray-300 cursor-default"
+              : "text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+          )}
+        >
+          −
+        </motion.button>
+        <motion.button
+          type="button"
+          onClick={() => onAdjustFontSize(1)}
+          disabled={fontSize === "large"}
+          whileTap={APPLE_TAP}
+          transition={APPLE_SPRING}
+          aria-label="Increase font size"
+          title="Larger text"
+          className={cn(
+            "min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-r-lg text-base font-medium transition-colors touch-manipulation border-l border-gray-200",
+            fontSize === "large"
+              ? "text-gray-300 cursor-default"
+              : "text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+          )}
+        >
+          +
+        </motion.button>
+      </div>
+      <motion.button
+        type="button"
+        onClick={onToggleBold}
+        whileTap={APPLE_TAP}
+        transition={APPLE_SPRING}
+        aria-pressed={isBold}
+        aria-label={isBold ? "Bold text (click to disable)" : "Bold text (click to enable)"}
+        title={isBold ? "Bold text" : "Normal text"}
+        className={cn(
+          "min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-lg text-sm transition-colors touch-manipulation",
+          isBold
+            ? "bg-amber-100 text-amber-800 font-bold"
+            : "text-gray-500 hover:bg-gray-100 hover:text-gray-700 font-normal"
+        )}
+      >
+        B
+      </motion.button>
+    </div>
+  )
+);
+LyricsFontToolbar.displayName = "LyricsFontToolbar";
+
 const LyricsModal = memo(
   ({ song, open, onOpenChange }: { song: Song | null; open: boolean; onOpenChange: (open: boolean) => void }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const { fontSize, isBold, adjustFontSize, toggleBold } = useLyricsFontSettings(open);
 
     useEffect(() => {
       if (open && scrollRef.current) {
@@ -497,6 +620,14 @@ const LyricsModal = memo(
             <DialogDescription className="sr-only">{ariaDescription}</DialogDescription>
           </DialogHeader>
           <div className="flex-1 min-h-0 flex flex-col">
+            <div className="flex-shrink-0 px-5 sm:px-8 lg:px-10 py-2 border-b border-gray-100">
+              <LyricsFontToolbar
+                fontSize={fontSize}
+                isBold={isBold}
+                onAdjustFontSize={adjustFontSize}
+                onToggleBold={toggleBold}
+              />
+            </div>
             {hasLyrics ? (
               <div
                 ref={scrollRef}
@@ -506,12 +637,12 @@ const LyricsModal = memo(
                 tabIndex={0}
                 className="lyrics-scroll h-[80dvh] sm:h-[85dvh] lg:h-[88dvh] w-full overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-inset"
               >
-                <div className="px-5 sm:px-8 lg:px-10 py-6 sm:py-8 text-base sm:text-lg lg:text-xl text-gray-700 leading-loose">
+                <div className={cn("px-5 sm:px-8 lg:px-10 py-6 sm:py-8 text-gray-700 leading-loose", LYRICS_FONT_CLASSES[fontSize], isBold && "font-bold")}>
                   {formatLyricsWithHighlights(song.lyrics!)}
                 </div>
               </div>
             ) : (
-              <div className="px-8 py-12 text-center text-gray-400 text-base sm:text-lg">
+              <div className={cn("px-8 py-12 text-center text-gray-400", LYRICS_FONT_CLASSES[fontSize], isBold && "font-bold")}>
                 No lyrics available for this song.
               </div>
             )}
@@ -528,6 +659,7 @@ LyricsModal.displayName = "LyricsModal";
 
 const SingerLyricsView = memo(({ song }: { song: Song | null }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { fontSize, isBold, adjustFontSize, toggleBold } = useLyricsFontSettings();
 
   useEffect(() => {
     if (song?.id && scrollRef.current) {
@@ -552,31 +684,66 @@ const SingerLyricsView = memo(({ song }: { song: Song | null }) => {
   const hasLyrics = !!song.lyrics?.trim();
 
   return (
-    <div
-      ref={scrollRef}
-      role="region"
-      aria-label={`Lyrics for ${song.title}`}
-      tabIndex={0}
-      className="lyrics-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-inset"
-    >
+    <div className="flex flex-col flex-1 min-h-0 bg-white">
+      <div className="flex-shrink-0 px-4 py-2 border-b border-gray-100">
+        <LyricsFontToolbar
+          fontSize={fontSize}
+          isBold={isBold}
+          onAdjustFontSize={adjustFontSize}
+          onToggleBold={toggleBold}
+        />
+      </div>
+      <div
+        ref={scrollRef}
+        role="region"
+        aria-label={`Lyrics for ${song.title}`}
+        tabIndex={0}
+        className="lyrics-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-inset"
+      >
       <div className="px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 md:py-10">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1">
             {song.title}
           </h2>
           {song.artist && (
-            <p className="text-base sm:text-lg text-gray-500 mb-6 sm:mb-8">{song.artist}</p>
+            <p
+              className={cn(
+                "text-base sm:text-lg text-gray-500",
+                (song.key || song.bpm || song.tempo) ? "mb-2" : "mb-6 sm:mb-8"
+              )}
+            >
+              {song.artist}
+            </p>
           )}
+          {(song.key || song.bpm || song.tempo) && (
+            <div className="flex flex-wrap items-center gap-2 mb-6 sm:mb-8">
+              {song.key && (
+                <span className="rounded-full bg-gray-900 px-2.5 py-0.5 text-xs font-bold text-white">
+                  {song.key}
+                </span>
+              )}
+              {song.bpm && (
+                <span className="text-sm text-gray-500 tabular-nums">{song.bpm} BPM</span>
+              )}
+              {song.tempo && (
+                <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                  {song.tempo}
+                </span>
+              )}
+            </div>
+          )}
+          {!song.artist && !song.key && !song.bpm && !song.tempo && <div className="mb-6 sm:mb-8" />}
           {hasLyrics ? (
-            <div className="text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed sm:leading-loose">
+            <div className={cn(LYRICS_FONT_CLASSES[fontSize], isBold && "font-bold", "text-gray-700 leading-relaxed sm:leading-loose")}>
               {formatLyricsWithHighlights(song.lyrics!)}
             </div>
           ) : (
-            <div className="py-12 sm:py-16 text-center text-gray-400 text-base sm:text-lg">
+            <div className={cn("py-12 sm:py-16 text-center text-gray-400", LYRICS_FONT_CLASSES[fontSize], isBold && "font-bold")}>
               No lyrics available for this song.
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
@@ -661,8 +828,8 @@ const SongItem = memo(
           transition={APPLE_SPRING_TIGHT}
           title="Double-tap for lyrics"
           className={cn(
-            "w-full text-left rounded-lg transition-colors duration-200 ease-out flex items-center justify-between gap-2 touch-manipulation",
-            isSingerView ? "px-3 py-3 sm:py-2 min-h-[48px] sm:min-h-0" : "px-2.5 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0",
+            "w-full text-left rounded-lg transition-colors duration-200 ease-out flex items-center justify-between gap-1.5 touch-manipulation",
+            isSingerView ? "px-3.5 py-3 sm:py-2.5 min-h-[50px] sm:min-h-[47px]" : "px-3 py-2.5 sm:py-2 min-h-[47px] sm:min-h-[44px]",
             isActive
               ? "bg-gray-900 text-white"
               : "bg-white text-gray-900 border border-gray-100 active:bg-gray-50 cursor-pointer"
@@ -671,7 +838,7 @@ const SongItem = memo(
         <span
           className={cn(
             "font-semibold truncate flex-1 leading-tight",
-            isSingerView ? "text-[14px]" : "text-[13px]",
+            isSingerView ? "text-[16px] sm:text-[15px]" : "text-[15px] sm:text-[14px]",
             isActive ? "text-white" : "text-gray-900"
           )}
         >
@@ -682,7 +849,7 @@ const SongItem = memo(
             <span
               className={cn(
                 "rounded font-bold leading-none",
-                isSingerView ? "px-2 py-0.5 text-[10px]" : "px-1.5 py-0.5 text-[9px]",
+                isSingerView ? "px-1.5 py-0.5 text-[10px]" : "px-1.5 py-0.5 text-[9px]",
                 isActive ? "bg-amber-400 text-amber-900" : "bg-amber-50 text-amber-600"
               )}
             >
@@ -699,8 +866,8 @@ const SongItem = memo(
               aria-label="Suggest next songs"
               title="Suggest 3 next songs based on key, tempo, and feel"
               className={cn(
-                "rounded-lg transition-colors touch-manipulation min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 flex items-center justify-center",
-                isSingerView ? "p-2 sm:p-1.5" : "p-2 sm:p-1",
+                "rounded-lg transition-colors touch-manipulation min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center",
+                isSingerView ? "p-2 sm:p-1.5" : "p-2 sm:p-1.5",
                 isAILoading
                   ? "text-amber-400/70 cursor-wait"
                   : "text-amber-400 hover:bg-amber-400/20 hover:text-amber-300 active:bg-amber-400/30"
@@ -951,9 +1118,17 @@ const SetlistSection = memo(
   }, [scrollToCurrentSong, scrollToCurrentSongRef]);
 
   if (filteredSongs.length === 0) {
+    const isSearch = deferredQuery.trim().length > 0;
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-400 text-sm">No songs found</p>
+      <div className="flex-1 flex flex-col items-center justify-center gap-2 px-4">
+        <p className="text-gray-400 text-sm text-center">
+          {isSearch ? "No songs match your search" : "No songs in setlist"}
+        </p>
+        {isSearch && (
+          <p className="text-gray-400 text-xs text-center max-w-[200px]">
+            Try a different term or clear the search
+          </p>
+        )}
       </div>
     );
   }
@@ -1283,20 +1458,20 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
         <div
           className={cn(
             "relative",
-            isSinger ? "mx-3 my-2 flex-shrink-0" : "mx-1.5 sm:mx-2 my-1 sm:my-1.5 flex-1 min-h-0 flex flex-col"
+            isSinger ? "mx-2 my-0.5 flex-shrink-0" : "mx-1.5 sm:mx-2 my-1 sm:my-1.5 flex-1 min-h-0 flex flex-col"
           )}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 rounded-2xl" />
           <div
             className={cn(
               "absolute bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900",
-              isSinger ? "inset-[3px] rounded-xl" : "inset-[2px] rounded-[10px]"
+              isSinger ? "inset-[3px] rounded-[13px]" : "inset-[2px] rounded-[14px]"
             )}
           />
           <div
             className={cn(
               "relative rounded-lg overflow-hidden bg-white",
-              isSinger ? "m-[6px]" : "m-1 sm:m-1.5 flex-1 min-h-0 flex flex-col"
+              isSinger ? "m-0.5" : "m-1 sm:m-1.5 flex-1 min-h-0 flex flex-col"
             )}
           >
             {authRole === "member" && (

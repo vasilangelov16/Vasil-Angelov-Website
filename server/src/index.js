@@ -254,7 +254,13 @@ function languageRegionScore(currentSong, candidate) {
 function ruleBasedSuggestions(currentSong, setlist, count = 3) {
   const currentId = currentSong?.id;
   if (!currentId) return [];
-  let candidates = setlist.filter((s) => s.id !== currentId);
+  const currentIndex = setlist.findIndex((s) => s.id === currentId);
+  if (currentIndex < 0) return [];
+  // Exclude the song immediately before current (avoid suggesting "go back" to previous song)
+  const prevSongId = currentIndex > 0 ? setlist[currentIndex - 1]?.id : null;
+  let candidates = setlist.filter(
+    (s) => s.id !== currentId && (!prevSongId || s.id !== prevSongId)
+  );
   if (candidates.length === 0) return [];
 
   const result = [];
