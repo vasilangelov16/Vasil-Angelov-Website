@@ -325,7 +325,7 @@ const CurrentSongDisplay = memo(
                     <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600 ring-2 ring-emerald-500/20" />
                   </span>
                   <h1
-                    className="font-serif font-black text-gray-950 truncate flex-1 min-w-0 text-[16px] sm:text-[18px] leading-tight tracking-tight drop-shadow-sm"
+                    className="font-serif font-black text-gray-950 truncate flex-1 min-w-0 text-[18px] sm:text-[20px] leading-tight tracking-tight drop-shadow-sm"
                     aria-live="polite"
                     aria-atomic="true"
                   >
@@ -451,13 +451,13 @@ const SearchBar = memo(
     onClear: () => void;
   }) => (
     <motion.div
-      className="relative"
+      className="relative flex items-center min-h-[44px] bg-white border border-gray-200 rounded-xl focus-within:border-gray-400 focus-within:ring-2 focus-within:ring-gray-200/50 transition-all duration-200"
       initial={false}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
     >
       <Search
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:left-2.5 text-gray-400 pointer-events-none"
+        className="absolute left-3 w-4 h-4 text-gray-400 pointer-events-none shrink-0"
         aria-hidden
       />
       <input
@@ -467,7 +467,7 @@ const SearchBar = memo(
         placeholder="Search songs..."
         aria-label="Search songs"
         autoComplete="off"
-        className="w-full pl-9 pr-10 py-3 sm:py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-200/50 transition-all duration-200 text-base min-h-[44px] sm:min-h-0 touch-manipulation"
+        className="flex-1 min-w-0 pl-9 pr-11 py-3 sm:py-2.5 bg-transparent border-0 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 text-base touch-manipulation"
       />
       <AnimatePresence>
         {value && (
@@ -480,9 +480,9 @@ const SearchBar = memo(
             transition={APPLE_SPRING}
             whileTap={APPLE_TAP}
             aria-label="Clear search"
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center touch-manipulation"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 touch-manipulation"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" strokeWidth={2.5} />
           </motion.button>
         )}
       </AnimatePresence>
@@ -490,6 +490,99 @@ const SearchBar = memo(
   )
 );
 SearchBar.displayName = "SearchBar";
+
+/** Repertoire categories matching the PDF structure */
+export type RepertoireCategory = "all" | "stranski" | "ex-yu" | "makedonski" | "turbo" | "extras";
+
+const CATEGORY_COLORS: Record<Exclude<RepertoireCategory, "all">, { bg: string; bgActive: string; text: string; ribbon: string }> = {
+  stranski: { bg: "bg-blue-100", bgActive: "bg-blue-500", text: "text-blue-800", ribbon: "bg-blue-500" },
+  "ex-yu": { bg: "bg-red-100", bgActive: "bg-red-500", text: "text-red-800", ribbon: "bg-red-500" },
+  makedonski: { bg: "bg-amber-100", bgActive: "bg-amber-500", text: "text-amber-900", ribbon: "bg-amber-500" },
+  turbo: { bg: "bg-orange-100", bgActive: "bg-orange-500", text: "text-orange-900", ribbon: "bg-orange-500" },
+  extras: { bg: "bg-slate-200", bgActive: "bg-slate-600", text: "text-slate-800", ribbon: "bg-slate-500" },
+};
+
+const REPERTOIRE_CATEGORIES: { value: RepertoireCategory; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "stranski", label: "Stranski" },
+  { value: "ex-yu", label: "EX-YU" },
+  { value: "makedonski", label: "Makedonski" },
+  { value: "turbo", label: "Turbo" },
+  { value: "extras", label: "Extras" },
+];
+
+function getSongCategory(song: Song): Exclude<RepertoireCategory, "all"> | null {
+  const g = song.genre?.toLowerCase();
+  if (g === "ex-yu") return "ex-yu";
+  if (g === "makedonski") return "makedonski";
+  if (g === "turbo") return "turbo";
+  if (g === "extras") return "extras";
+  if (g && g !== "ex-yu" && g !== "makedonski" && g !== "turbo" && g !== "extras") return "stranski";
+  return null;
+}
+
+function matchesCategory(song: Song, category: RepertoireCategory): boolean {
+  const g = song.genre?.toLowerCase();
+  switch (category) {
+    case "all":
+      return true;
+    case "stranski":
+      return g !== "ex-yu" && g !== "makedonski" && g !== "turbo" && g !== "extras";
+    case "ex-yu":
+      return g === "ex-yu";
+    case "makedonski":
+      return g === "makedonski";
+    case "turbo":
+      return g === "turbo";
+    case "extras":
+      return g === "extras";
+    default:
+      return true;
+  }
+}
+
+const CategoryFilter = memo(
+  ({
+    value,
+    onChange,
+    className,
+  }: {
+    value: RepertoireCategory;
+    onChange: (v: RepertoireCategory) => void;
+    className?: string;
+  }) => (
+    <div className={cn("flex gap-1.5 overflow-x-auto pb-1 -mx-1 hide-scrollbar", className)} role="tablist" aria-label="Filter by category">
+      {REPERTOIRE_CATEGORIES.map((cat) => {
+        const colors = cat.value !== "all" ? CATEGORY_COLORS[cat.value] : null;
+        return (
+          <motion.button
+            key={cat.value}
+            type="button"
+            role="tab"
+            aria-selected={value === cat.value}
+            aria-label={`Filter: ${cat.label}`}
+            onClick={() => onChange(cat.value)}
+            whileTap={APPLE_TAP}
+            transition={APPLE_SPRING}
+            className={cn(
+              "shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors touch-manipulation whitespace-nowrap",
+              cat.value === "all"
+                ? value === "all"
+                  ? "bg-gray-800 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800"
+                : value === cat.value
+                  ? cn(colors?.bgActive, "text-white")
+                  : cn(colors?.bg, colors?.text, "hover:opacity-90")
+            )}
+          >
+            {cat.label}
+          </motion.button>
+        );
+      })}
+    </div>
+  )
+);
+CategoryFilter.displayName = "CategoryFilter";
 
 function formatLyricsWithHighlights(lyrics: string) {
   return lyrics.split("\n").map((line, i) => {
@@ -610,12 +703,14 @@ const LyricsModal = memo(
           aria-describedby={hasLyrics ? "lyrics-content" : undefined}
           className="w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-none sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[calc(100dvh-2rem)] my-4 p-0 gap-0 overflow-hidden rounded-xl sm:rounded-2xl border border-gray-200 bg-white shadow-2xl duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 [&>button]:text-gray-600 [&>button]:hover:text-gray-900 [&>button]:hover:bg-gray-100 [&>button]:rounded-full [&>button]:p-2.5 sm:[&>button]:p-3 [&>button]:right-4 [&>button]:top-4 [&>button]:text-lg [&>button]:focus-visible:ring-2 [&>button]:focus-visible:ring-gray-400 [&>button]:focus-visible:ring-offset-2"
         >
-          <DialogHeader className="px-5 sm:px-8 lg:px-10 pt-6 sm:pt-8 pb-4 border-b border-gray-100 shrink-0">
-            <DialogTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 pr-12">
+          <DialogHeader className="px-5 sm:px-8 lg:px-10 pt-6 sm:pt-8 pb-4 border-b border-gray-100 shrink-0 text-left min-w-0 space-y-2">
+            <DialogTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 pr-12 sm:pr-14 min-w-0 break-words leading-tight">
               {song.title}
             </DialogTitle>
             {song.artist && (
-              <p className="text-base sm:text-lg lg:text-xl text-gray-500 font-medium mt-1">{song.artist}</p>
+              <p className="text-base sm:text-lg lg:text-xl text-gray-500 font-medium pr-12 sm:pr-14 min-w-0 break-words leading-snug">
+                {song.artist}
+              </p>
             )}
             <DialogDescription className="sr-only">{ariaDescription}</DialogDescription>
           </DialogHeader>
@@ -802,6 +897,9 @@ const SongItem = memo(
       },
       [song, onAISuggest]
     );
+    const songCategory = getSongCategory(song);
+    const ribbonColor = songCategory ? CATEGORY_COLORS[songCategory].ribbon : null;
+
     return (
       <motion.div
         layout="position"
@@ -828,13 +926,25 @@ const SongItem = memo(
           transition={APPLE_SPRING_TIGHT}
           title="Double-tap for lyrics"
           className={cn(
-            "w-full text-left rounded-lg transition-colors duration-200 ease-out flex items-center justify-between gap-1.5 touch-manipulation",
-            isSingerView ? "px-3.5 py-3 sm:py-2.5 min-h-[50px] sm:min-h-[47px]" : "px-3 py-2.5 sm:py-2 min-h-[47px] sm:min-h-[44px]",
+            "w-full text-left rounded-lg transition-colors duration-200 ease-out flex items-center justify-between gap-1.5 touch-manipulation relative overflow-hidden",
+            isSingerView
+              ? ribbonColor
+                ? "pl-4 pr-3.5 py-3 sm:py-2.5 min-h-[50px] sm:min-h-[47px]"
+                : "px-3.5 py-3 sm:py-2.5 min-h-[50px] sm:min-h-[47px]"
+              : ribbonColor
+                ? "pl-3.5 pr-3 py-2.5 sm:py-2 min-h-[47px] sm:min-h-[44px]"
+                : "px-3 py-2.5 sm:py-2 min-h-[47px] sm:min-h-[44px]",
             isActive
               ? "bg-gray-900 text-white"
               : "bg-white text-gray-900 border border-gray-100 active:bg-gray-50 cursor-pointer"
           )}
         >
+        {ribbonColor && (
+          <span
+            className={cn("absolute left-0 top-0 bottom-0 w-1.5 rounded-l-lg shrink-0", ribbonColor)}
+            aria-hidden
+          />
+        )}
         <span
           className={cn(
             "font-semibold truncate flex-1 leading-tight",
@@ -904,10 +1014,12 @@ SongItem.displayName = "SongItem";
 const SetlistSection = memo(
   ({
     searchQuery,
+    categoryFilter,
     authRole,
     scrollToCurrentSongRef,
   }: {
     searchQuery: string;
+    categoryFilter: RepertoireCategory;
     authRole: BandAuth["role"];
     scrollToCurrentSongRef?: React.MutableRefObject<(() => void) | null>;
   }) => {
@@ -926,22 +1038,23 @@ const SetlistSection = memo(
   const loadMoreThrottleRef = useRef<number | null>(null);
 
   const filteredSongs = useMemo(() => {
+    let list = setlist.filter((s) => matchesCategory(s, categoryFilter));
     const q = deferredQuery.trim().toLowerCase();
-    if (!q) return setlist;
-    return setlist.filter(
+    if (!q) return list;
+    return list.filter(
       (s) =>
         s.title.toLowerCase().includes(q) ||
         s.artist?.toLowerCase().includes(q) ||
         s.key?.toLowerCase().includes(q)
     );
-  }, [setlist, deferredQuery]);
+  }, [setlist, deferredQuery, categoryFilter]);
 
   const filteredLengthRef = useRef(filteredSongs.length);
   filteredLengthRef.current = filteredSongs.length;
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [deferredQuery]);
+  }, [deferredQuery, categoryFilter]);
 
   useEffect(() => {
     return () => {
@@ -1217,11 +1330,24 @@ type SingerViewMode = "setlist" | "lyrics";
 
 const METRONOME_STORAGE_KEY = "band-app-metronome";
 const METRONOME_VISIBLE_STORAGE_KEY = "band-app-metronome-visible";
+const CATEGORY_FILTER_STORAGE_KEY = "band-app-category-filter";
+
+const VALID_CATEGORIES: RepertoireCategory[] = ["all", "stranski", "ex-yu", "makedonski", "turbo", "extras"];
+
+function readStoredCategory(): RepertoireCategory {
+  try {
+    const stored = localStorage.getItem(CATEGORY_FILTER_STORAGE_KEY);
+    return stored && VALID_CATEGORIES.includes(stored as RepertoireCategory) ? (stored as RepertoireCategory) : "all";
+  } catch {
+    return "all";
+  }
+}
 
 const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"]; onLogout: () => void }) => {
   const { isSinger, setIsSinger, hasUpdate, isConnected, isOffline } = useBandUI();
   const { state } = useBandState();
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<RepertoireCategory>(readStoredCategory);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [singerViewMode, setSingerViewMode] = useState<SingerViewMode>("setlist");
   const [metronomeEnabled, setMetronomeEnabled] = useState(() => {
@@ -1257,11 +1383,20 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
     }
   }, [metronomeVisible]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(CATEGORY_FILTER_STORAGE_KEY, categoryFilter);
+    } catch {
+      /* ignore */
+    }
+  }, [categoryFilter]);
+
   const handleSingerViewToggle = useCallback(() => {
     setSingerViewMode((prev) => (prev === "setlist" ? "lyrics" : "setlist"));
   }, []);
   const handleSearchChange = useCallback((v: string) => setSearchQuery(v), []);
   const handleSearchClear = useCallback(() => setSearchQuery(""), []);
+  const handleCategoryChange = useCallback((v: RepertoireCategory) => setCategoryFilter(v), []);
   const handleCloseLogout = useCallback(() => setShowLogoutDialog(false), []);
   const handleConfirmLogout = useCallback(() => {
     setShowLogoutDialog(false);
@@ -1457,21 +1592,20 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
       {!(authRole === "singer" && singerViewMode === "lyrics") && (
         <div
           className={cn(
-            "relative",
-            isSinger ? "mx-2 my-0.5 flex-shrink-0" : "mx-1.5 sm:mx-2 my-1 sm:my-1.5 flex-1 min-h-0 flex flex-col"
+            "rounded-2xl p-[3px] sm:p-[4px] bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500",
+            isSinger ? "mx-1 my-0.5 flex-shrink-0" : "mx-1.5 sm:mx-2 my-1 sm:my-1.5 flex-1 min-h-0 flex flex-col"
           )}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 rounded-2xl" />
           <div
             className={cn(
-              "absolute bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900",
-              isSinger ? "inset-[3px] rounded-[13px]" : "inset-[2px] rounded-[14px]"
+              "rounded-[13px] sm:rounded-[14px] overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col",
+              isSinger ? "min-h-0" : "flex-1 min-h-0"
             )}
-          />
+          >
           <div
             className={cn(
-              "relative rounded-lg overflow-hidden bg-white",
-              isSinger ? "m-0.5" : "m-1 sm:m-1.5 flex-1 min-h-0 flex flex-col"
+              "rounded-lg overflow-hidden bg-white flex flex-col m-0.5 sm:m-1",
+              isSinger ? "min-h-0" : "flex-1 min-h-0"
             )}
           >
             {authRole === "member" && (
@@ -1505,6 +1639,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
               }
             />
           </div>
+          </div>
         </div>
       )}
 
@@ -1520,15 +1655,20 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                 transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
                 className="absolute inset-0 flex flex-col"
               >
-                <div className="flex-shrink-0 px-2 py-1.5 bg-gray-50">
+                <div className="flex-shrink-0 px-2 py-1.5 bg-gray-50 space-y-2">
                   <SearchBar
                     value={searchQuery}
                     onChange={handleSearchChange}
                     onClear={handleSearchClear}
                   />
+                  <CategoryFilter
+                    value={categoryFilter}
+                    onChange={handleCategoryChange}
+                  />
                 </div>
                 <SetlistSection
                   searchQuery={searchQuery}
+                  categoryFilter={categoryFilter}
                   authRole={authRole}
                   scrollToCurrentSongRef={scrollToCurrentSongRef}
                 />

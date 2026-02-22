@@ -67,6 +67,7 @@ Use this checklist before deploying the Band Setlist app to band.vasilangelov.co
 - Key, tempo, genre, BPM per song
 - Lyrics modal (double-tap song) + Singer full-screen lyrics view (Setlist/Lyrics toggle)
 - Lyrics font controls: zoom (+/−), bold toggle (B), persisted in localStorage, synced between modal and full view
+- **Singer view**: Category filter (All, Stranski, EX-YU, Makedonski, Turbo, Extras) with coloured ribbons, persisted in localStorage
 - Lyrics indicator on toggle when song selected (amber = has lyrics, gray = none)
 - Tap Now Playing to scroll list to selected song (Apple-like smooth scroll)
 - Real-time sync via WebSocket
