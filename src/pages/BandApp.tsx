@@ -1402,11 +1402,10 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             initial={false}
             animate={{
               opacity: singerViewMode === "setlist" ? 1 : 0,
-              x: singerViewMode === "setlist" ? 0 : -12,
               pointerEvents: singerViewMode === "setlist" ? "auto" : "none",
               zIndex: singerViewMode === "setlist" ? 10 : 0,
             }}
-            transition={{ duration: VIEW_SWITCH_DURATION, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: VIEW_SWITCH_DURATION, ease: VIEW_SWITCH_EASE }}
             className="absolute inset-0 flex flex-col"
           >
             <div className="flex-shrink-0 px-2 py-1.5 bg-gray-50 space-y-2">
@@ -1431,11 +1430,10 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             initial={false}
             animate={{
               opacity: singerViewMode === "lyrics" ? 1 : 0,
-              x: singerViewMode === "lyrics" ? 0 : 12,
               pointerEvents: singerViewMode === "lyrics" ? "auto" : "none",
               zIndex: singerViewMode === "lyrics" ? 10 : 0,
             }}
-            transition={{ duration: VIEW_SWITCH_DURATION, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: VIEW_SWITCH_DURATION, ease: VIEW_SWITCH_EASE }}
             className="absolute inset-0 flex flex-col"
           >
             <SingerLyricsView song={state.currentSong} />
