@@ -1252,16 +1252,22 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             animate={{ 
               y: 0, 
               opacity: 1,
-              height: "auto"
             }}
             exit={{ 
-              y: -60, 
+              y: -80, 
               opacity: 0,
-              height: 0,
-              transition: { duration: 0.35, ease: [0.32, 0.72, 0, 1] }
+              transition: { 
+                duration: 0.45, 
+                ease: [0.32, 0.72, 0, 1],
+                opacity: { duration: 0.3 }
+              }
             }}
-            transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-            className="flex-shrink-0 px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)] transition-colors duration-200">
+            transition={{ 
+              y: { duration: 0.45, ease: [0.32, 0.72, 0, 1] },
+              opacity: { duration: 0.35 }
+            }}
+            style={{ willChange: "transform, opacity" }}
+            className="flex-shrink-0 px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)]">
         <div className="flex items-center gap-2 min-w-0 flex-1 justify-start">
           <motion.button
             type="button"
