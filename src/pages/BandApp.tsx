@@ -54,8 +54,9 @@ const CurrentSongDisplay = memo(
   ({
     compact = false,
     stageMode = false,
+    isFullscreen = false,
     onScrollToCurrent,
-  }: { compact?: boolean; stageMode?: boolean; onScrollToCurrent?: () => void }) => {
+  }: { compact?: boolean; stageMode?: boolean; isFullscreen?: boolean; onScrollToCurrent?: () => void }) => {
   const { state } = useBandState();
   const { currentSong } = state;
   const reducedMotion = useReducedMotion();
@@ -83,27 +84,41 @@ const CurrentSongDisplay = memo(
   const containerClass = compact
     ? "px-4 sm:px-5 py-2"
     : stageMode
-      ? "px-6 sm:px-10 md:px-14 lg:px-20 py-6 sm:py-10 md:py-12 lg:py-16"
+      ? isFullscreen 
+        ? "px-8 sm:px-12 md:px-16 lg:px-24 py-8 sm:py-12 md:py-16 lg:py-20"
+        : "px-6 sm:px-10 md:px-14 lg:px-20 py-6 sm:py-10 md:py-12 lg:py-16"
       : "px-6 sm:px-10 md:px-14 py-4 sm:py-8 md:py-12 lg:py-16";
-  const labelClass = compact ? "mb-1 sm:mb-1.5" : stageMode ? "mb-3 sm:mb-4 md:mb-5" : "mb-2 sm:mb-3 md:mb-4";
-  const dotClass = compact ? "h-1.5 w-1.5" : stageMode ? "h-3 w-3 sm:h-3.5 sm:w-3.5" : "h-2.5 w-2.5 sm:h-3 sm:w-3";
-  const labelTextClass = compact ? "text-[8px]" : stageMode ? "text-xs sm:text-sm md:text-base" : "text-xs sm:text-sm md:text-base";
+  const labelClass = compact ? "mb-1 sm:mb-1.5" : stageMode ? (isFullscreen ? "mb-4 sm:mb-5 md:mb-6" : "mb-3 sm:mb-4 md:mb-5") : "mb-2 sm:mb-3 md:mb-4";
+  const dotClass = compact ? "h-1.5 w-1.5" : stageMode ? (isFullscreen ? "h-4 w-4 sm:h-4.5 sm:w-4.5" : "h-3 w-3 sm:h-3.5 sm:w-3.5") : "h-2.5 w-2.5 sm:h-3 sm:w-3";
+  const labelTextClass = compact ? "text-[8px]" : stageMode ? (isFullscreen ? "text-sm sm:text-base md:text-lg" : "text-xs sm:text-sm md:text-base") : "text-xs sm:text-sm md:text-base";
   const titleClass = compact
     ? "text-lg sm:text-xl md:text-2xl"
     : stageMode
-      ? "text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl"
+      ? isFullscreen
+        ? "text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[10rem]"
+        : "text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl"
       : "text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl";
-  const artistClass = compact ? "mt-0.5 text-[10px] sm:text-xs" : stageMode ? "mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl" : "mt-2 sm:mt-3 text-base sm:text-xl md:text-2xl lg:text-3xl";
-  const badgesClass = compact ? "mt-1 sm:mt-1.5" : stageMode ? "mt-6 sm:mt-8 md:mt-10" : "mt-4 sm:mt-6 md:mt-8";
+  const artistClass = compact 
+    ? "mt-0.5 text-[10px] sm:text-xs" 
+    : stageMode 
+      ? isFullscreen
+        ? "mt-4 sm:mt-5 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl"
+        : "mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl"
+      : "mt-2 sm:mt-3 text-base sm:text-xl md:text-2xl lg:text-3xl";
+  const badgesClass = compact ? "mt-1 sm:mt-1.5" : stageMode ? (isFullscreen ? "mt-8 sm:mt-10 md:mt-12" : "mt-6 sm:mt-8 md:mt-10") : "mt-4 sm:mt-6 md:mt-8";
   const badgeClass = compact
     ? "px-1.5 py-0.5 text-[10px]"
     : stageMode
-      ? "px-4 sm:px-6 py-2 sm:py-2.5 text-lg sm:text-xl md:text-2xl lg:text-3xl"
+      ? isFullscreen
+        ? "px-6 sm:px-8 py-3 sm:py-3.5 text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+        : "px-4 sm:px-6 py-2 sm:py-2.5 text-lg sm:text-xl md:text-2xl lg:text-3xl"
       : "px-5 sm:px-6 py-2.5 sm:py-3 text-xl sm:text-2xl md:text-3xl";
   const badgeClassMuted = compact
     ? "px-1.5 py-0.5 text-[9px]"
     : stageMode
-      ? "px-4 sm:px-6 py-2 sm:py-2.5 text-base sm:text-lg md:text-xl lg:text-2xl"
+      ? isFullscreen
+        ? "px-6 sm:px-8 py-3 sm:py-3.5 text-xl sm:text-2xl md:text-3xl lg:text-4xl"
+        : "px-4 sm:px-6 py-2 sm:py-2.5 text-base sm:text-lg md:text-xl lg:text-2xl"
       : "px-5 sm:px-6 py-2.5 sm:py-3 text-lg sm:text-xl md:text-2xl";
 
   const isClickable = compact && !!currentSong && !!onScrollToCurrent;
@@ -1243,7 +1258,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
   }, [authRole]);
 
   return (
-    <div className="band-app-font h-[100dvh] min-h-[100dvh] bg-[#f5f5f7] flex flex-col overflow-hidden">
+    <div className="band-app-font h-[100dvh] min-h-[100dvh] bg-[#f5f5f7] flex flex-col overflow-hidden relative">
       <AnimatePresence>
         {(!isFullscreen || authRole !== "member") && (
           <motion.header
@@ -1267,7 +1282,10 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
               opacity: { duration: 0.35 }
             }}
             style={{ willChange: "transform, opacity" }}
-            className="flex-shrink-0 px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+            className={cn(
+              "px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)]",
+              authRole === "member" && "absolute top-0 left-0 right-0 z-50"
+            )}>
         <div className="flex items-center gap-2 min-w-0 flex-1 justify-start">
           <motion.button
             type="button"
@@ -1522,6 +1540,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             <CurrentSongDisplay
               compact={isSinger}
               stageMode={authRole === "member"}
+              isFullscreen={isFullscreen}
               onScrollToCurrent={
                 authRole === "singer"
                   ? handleScrollToCurrentFromNowPlaying
