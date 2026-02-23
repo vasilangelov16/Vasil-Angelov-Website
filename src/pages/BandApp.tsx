@@ -1039,11 +1039,13 @@ const SetlistSection = memo(
     categoryFilter,
     authRole,
     scrollToCurrentSongRef,
+    listScrollPositionRef,
   }: {
     searchQuery: string;
     categoryFilter: RepertoireCategory;
     authRole: BandAuth["role"];
     scrollToCurrentSongRef?: React.MutableRefObject<(() => void) | null>;
+    listScrollPositionRef?: React.MutableRefObject<number>;
   }) => {
     const deferredQuery = useDeferredValue(searchQuery);
     const { state, setCurrentSong, reorderSetlistWithSuggestions } = useBandState();
@@ -1228,10 +1230,12 @@ const SetlistSection = memo(
 
   const handleSelectSong = useCallback(
     (song: Song) => {
+      // Prevent deselect when clicking the same song twice (keeps selection stable)
+      if (currentSong?.id === song.id) return;
       setCurrentSong(song);
       setScrollTarget({ type: "song", id: song.id });
     },
-    [setCurrentSong]
+    [setCurrentSong, currentSong?.id]
   );
 
   const scrollToCurrentSong = useCallback(() => {
@@ -1252,6 +1256,29 @@ const SetlistSection = memo(
       };
     }
   }, [scrollToCurrentSong, scrollToCurrentSongRef]);
+
+  // Save scroll position when unmounting (e.g. switching to lyrics view)
+  useEffect(() => {
+    if (!listScrollPositionRef) return;
+    return () => {
+      if (scrollRef.current) {
+        listScrollPositionRef.current = scrollRef.current.scrollTop;
+      }
+    };
+  }, [listScrollPositionRef]);
+
+  // Restore scroll position when mounting (e.g. switching back from lyrics view)
+  useEffect(() => {
+    if (!listScrollPositionRef) return;
+    const saved = listScrollPositionRef.current;
+    if (saved <= 0) return;
+    const raf = requestAnimationFrame(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = saved;
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [listScrollPositionRef]);
 
   if (filteredSongs.length === 0) {
     const isSearch = deferredQuery.trim().length > 0;
@@ -1389,6 +1416,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
     }
   });
   const scrollToCurrentSongRef = useRef<(() => void) | null>(null);
+  const listScrollPositionRef = useRef(0);
 
   useEffect(() => {
     try {
@@ -1694,6 +1722,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                   categoryFilter={categoryFilter}
                   authRole={authRole}
                   scrollToCurrentSongRef={scrollToCurrentSongRef}
+                  listScrollPositionRef={listScrollPositionRef}
                 />
               </motion.div>
             ) : (
