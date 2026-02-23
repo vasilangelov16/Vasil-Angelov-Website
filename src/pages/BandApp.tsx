@@ -11,7 +11,7 @@ import {
   clearStoredAuth,
   type BandAuth,
 } from "@/components/PinGate";
-import { Music, X, Mic2, Users, Search, LogOut, Sparkles, List, FileText, Timer, Type } from "lucide-react";
+import { Music, Mic2, Users, LogOut, Sparkles, List, FileText, Timer, Type } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -20,187 +20,36 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-const PAGE_SIZE = 30; // Chunk size for infinite scroll (loads 30 at a time)
-const SETLIST_SCROLL_STORAGE_KEY = "band-app-setlist-scroll";
-
-/** Normalize text for accent-insensitive search (e.g. "noc" matches "Noć") */
-function normalizeForSearch(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .toLowerCase();
-}
-const BLINK_DURATION = 2600;
-
-// Apple-like spring config — smooth, minimal, elegant
-const APPLE_SPRING = { type: "spring" as const, stiffness: 300, damping: 30 };
-const APPLE_SPRING_TIGHT = { type: "spring" as const, stiffness: 400, damping: 30 };
-const APPLE_SPRING_GENTLE = { type: "spring" as const, stiffness: 200, damping: 25 };
-const LAYOUT_SPRING = { type: "spring" as const, stiffness: 180, damping: 22 }; // smooth reorder
-const LAYOUT_TWEEN = { duration: 0.45, ease: [0.32, 0.72, 0, 1] as const }; // buttery reorder
-const APPLE_TAP = { scale: 0.98 };
-const APPLE_EASE = [0.32, 0.72, 0, 1] as const; // Apple-style ease-out
-const FADE_DURATION = 0.25; // Short, smooth crossfades
-const VIEW_SWITCH_DURATION = 0.35; // Smooth slide + fade
-
-/** Apple-like smooth scroll: ease-out cubic, ~550ms */
-function animateScrollTo(container: HTMLElement, targetTop: number, durationMs = 550) {
-  const start = container.scrollTop;
-  const distance = targetTop - start;
-  if (Math.abs(distance) < 2) return;
-  const startTime = performance.now();
-  const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
-
-  const tick = (now: number) => {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / durationMs, 1);
-    const eased = easeOutCubic(progress);
-    container.scrollTop = start + distance * eased;
-    if (progress < 1) requestAnimationFrame(tick);
-  };
-  requestAnimationFrame(tick);
-}
-
-const DEFAULT_METRONOME_BPM = 120;
-const METRONOME_PULSE_MS = 100;
-
-const VisualMetronome = memo(
-  ({
-    bpm,
-    songId,
-    enabled,
-    onEnabledChange,
-  }: {
-    bpm: number;
-    songId: string | null;
-    enabled: boolean;
-    onEnabledChange: (v: boolean) => void;
-  }) => {
-    const [beatCount, setBeatCount] = useState(0);
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const reducedMotion = useReducedMotion();
-
-    useEffect(() => {
-      setBeatCount(0);
-      if (!enabled) {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        return;
-      }
-      const clampedBpm = Math.max(40, Math.min(240, bpm));
-      const intervalMs = 60000 / clampedBpm;
-      intervalRef.current = setInterval(() => {
-        setBeatCount((c) => c + 1);
-      }, intervalMs);
-      return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-      };
-    }, [enabled, bpm, songId]);
-
-    const clampedBpm = Math.max(40, Math.min(240, bpm));
-    const beatInBar = beatCount % 4;
-    const isDownbeat = beatInBar === 0;
-
-    return (
-      <div
-        role="region"
-        aria-label={`Metronome ${enabled ? "on" : "off"}, ${clampedBpm} BPM`}
-        className="flex-shrink-0 flex items-center justify-between gap-4 px-5 py-3.5 border-b border-gray-100 bg-white transition-all duration-300 ease-out"
-      >
-        <div
-          className={cn(
-            "flex items-center gap-4 sm:gap-5 flex-1 min-w-0 transition-opacity duration-300",
-            !enabled && "opacity-40"
-          )}
-        >
-          <div className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
-            {enabled ? (
-              <>
-                {!reducedMotion && (
-                  <motion.div
-                    key={`ring-${beatCount}`}
-                    initial={{ scale: 1, opacity: 0.5 }}
-                    animate={{ scale: 1.9, opacity: 0 }}
-                    transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
-                    className="absolute inset-0 rounded-full border-2 border-red-600 will-change-transform"
-                  />
-                )}
-                <motion.div
-                  key={beatCount}
-                  initial={{ scale: 1, opacity: 1 }}
-                  animate={{
-                    scale: reducedMotion ? [1, 1, 1] : isDownbeat ? [1, 1.3, 1] : [1, 1.12, 1],
-                    opacity: reducedMotion ? [1, 0.85, 1] : [1, 1, 1],
-                  }}
-                  transition={{
-                    duration: METRONOME_PULSE_MS / 1000,
-                    times: [0, 0.25, 1],
-                    ease: [0.25, 0.46, 0.45, 0.94],
-                  }}
-                  className={cn(
-                    "absolute inset-0 rounded-full",
-                    !reducedMotion && "will-change-transform",
-                    isDownbeat
-                      ? "bg-red-600 shadow-[0_0_16px_rgba(220,38,38,0.45)]"
-                      : "bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.35)]"
-                  )}
-                />
-              </>
-            ) : (
-              <div className="absolute inset-0 rounded-full bg-gray-200/50" />
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-600">
-              Metronome
-            </p>
-            <p className="text-lg sm:text-xl font-bold tabular-nums tracking-tight text-gray-800">
-              {clampedBpm} <span className="text-sm font-medium text-gray-500">BPM</span>
-            </p>
-          </div>
-        </div>
-        <label
-          className={cn(
-            "flex items-center gap-2.5 cursor-pointer touch-manipulation min-h-[44px] min-w-[44px] justify-end flex-shrink-0 transition-opacity duration-300",
-            !enabled && "opacity-70"
-          )}
-        >
-          <span className="text-[10px] font-medium uppercase tracking-wider text-gray-600">
-            {enabled ? "On" : "Off"}
-          </span>
-          <Switch
-            checked={enabled}
-            onCheckedChange={onEnabledChange}
-            aria-label="Toggle metronome"
-            className={cn(
-              "h-7 w-12 [&>span]:bg-white",
-              enabled
-                ? "data-[state=unchecked]:bg-gray-200/80 data-[state=unchecked]:border-gray-200/80 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                : "data-[state=unchecked]:bg-gray-200/70 data-[state=unchecked]:border-gray-200/70 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-            )}
-          />
-        </label>
-      </div>
-    );
-  }
-);
-VisualMetronome.displayName = "VisualMetronome";
-
-const BLINK_COLORS = ["#fbbf24", "#ffffff"] as const;
-const BLINK_TIMES = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] as const;
-const BLINK_ANIMATE_COLORS = [
-  ...BLINK_COLORS,
-  ...BLINK_COLORS,
-  ...BLINK_COLORS,
-  ...BLINK_COLORS,
-  ...BLINK_COLORS,
-] as const;
+import {
+  PAGE_SIZE,
+  SETLIST_SCROLL_STORAGE_KEY,
+  BLINK_DURATION,
+  APPLE_SPRING,
+  APPLE_SPRING_TIGHT,
+  APPLE_SPRING_GENTLE,
+  APPLE_EASE,
+  FADE_DURATION,
+  VIEW_SWITCH_DURATION,
+  VIEW_SWITCH_EASE,
+  BLINK_COLORS,
+  BLINK_ANIMATE_COLORS,
+  BLINK_TIMES,
+  LAYOUT_TWEEN,
+  LAYOUT_SPRING,
+  APPLE_TAP,
+  DEFAULT_METRONOME_BPM,
+} from "@/band/constants";
+import {
+  normalizeForSearch,
+  animateScrollTo,
+  getSongCategory,
+  matchesCategory,
+  readStoredScrollState,
+} from "@/band/utils";
+import type { RepertoireCategory } from "@/band/types";
+import { CATEGORY_COLORS } from "@/band/types";
+import { MemoizedLyricsContent } from "@/band/lyrics";
+import { VisualMetronome, SearchBar, CategoryFilter } from "@/band";
 
 const CurrentSongDisplay = memo(
   ({
@@ -449,185 +298,6 @@ const CurrentSongDisplay = memo(
   );
 });
 CurrentSongDisplay.displayName = "CurrentSongDisplay";
-
-const SearchBar = memo(
-  ({
-    value,
-    onChange,
-    onClear,
-  }: {
-    value: string;
-    onChange: (value: string) => void;
-    onClear: () => void;
-  }) => (
-    <motion.div
-      className="relative flex items-center min-h-[44px] bg-white border border-gray-200 rounded-xl focus-within:border-gray-400 focus-within:ring-2 focus-within:ring-gray-200/50 transition-all duration-200"
-      initial={false}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.2 }}
-    >
-      <Search
-        className="absolute left-3 w-4 h-4 text-gray-400 pointer-events-none shrink-0"
-        aria-hidden
-      />
-      <input
-        type="text"
-        inputMode="search"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Search songs..."
-        aria-label="Search songs"
-        autoComplete="off"
-        className="flex-1 min-w-0 pl-9 pr-11 py-3 sm:py-2.5 bg-transparent border-0 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 text-base touch-manipulation"
-      />
-      <AnimatePresence>
-        {value && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.92 }}
-            transition={APPLE_SPRING}
-            className="absolute inset-y-0 right-0 flex items-center pr-1.5"
-          >
-            <motion.button
-              type="button"
-              onClick={onClear}
-              whileTap={APPLE_TAP}
-              aria-label="Clear search"
-              className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 touch-manipulation"
-            >
-              <X className="w-4 h-4" strokeWidth={2.5} />
-            </motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  )
-);
-SearchBar.displayName = "SearchBar";
-
-/** Repertoire categories matching the PDF structure */
-export type RepertoireCategory = "all" | "stranski" | "ex-yu" | "makedonski" | "turbo" | "extras";
-
-const CATEGORY_COLORS: Record<Exclude<RepertoireCategory, "all">, { bg: string; bgActive: string; text: string; ribbon: string }> = {
-  stranski: { bg: "bg-blue-100", bgActive: "bg-blue-500", text: "text-blue-800", ribbon: "bg-blue-500" },
-  "ex-yu": { bg: "bg-red-100", bgActive: "bg-red-500", text: "text-red-800", ribbon: "bg-red-500" },
-  makedonski: { bg: "bg-amber-100", bgActive: "bg-amber-500", text: "text-amber-900", ribbon: "bg-amber-500" },
-  turbo: { bg: "bg-orange-100", bgActive: "bg-orange-500", text: "text-orange-900", ribbon: "bg-orange-500" },
-  extras: { bg: "bg-slate-200", bgActive: "bg-slate-600", text: "text-slate-800", ribbon: "bg-slate-500" },
-};
-
-const REPERTOIRE_CATEGORIES: { value: RepertoireCategory; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "stranski", label: "Stranski" },
-  { value: "ex-yu", label: "EX-YU" },
-  { value: "makedonski", label: "Makedonski" },
-  { value: "turbo", label: "Turbo" },
-  { value: "extras", label: "Extras" },
-];
-
-function getSongCategory(song: Song): Exclude<RepertoireCategory, "all"> | null {
-  const g = song.genre?.toLowerCase();
-  if (g === "ex-yu") return "ex-yu";
-  if (g === "makedonski") return "makedonski";
-  if (g === "turbo") return "turbo";
-  if (g === "extras") return "extras";
-  if (g && g !== "ex-yu" && g !== "makedonski" && g !== "turbo" && g !== "extras") return "stranski";
-  return null;
-}
-
-function matchesCategory(song: Song, category: RepertoireCategory): boolean {
-  const g = song.genre?.toLowerCase();
-  switch (category) {
-    case "all":
-      return true;
-    case "stranski":
-      return g !== "ex-yu" && g !== "makedonski" && g !== "turbo" && g !== "extras";
-    case "ex-yu":
-      return g === "ex-yu";
-    case "makedonski":
-      return g === "makedonski";
-    case "turbo":
-      return g === "turbo";
-    case "extras":
-      return g === "extras";
-    default:
-      return true;
-  }
-}
-
-const CategoryFilter = memo(
-  ({
-    value,
-    onChange,
-    className,
-  }: {
-    value: RepertoireCategory;
-    onChange: (v: RepertoireCategory) => void;
-    className?: string;
-  }) => (
-    <div className={cn("flex gap-1.5 overflow-x-auto pb-1 -mx-1 hide-scrollbar", className)} role="tablist" aria-label="Filter by category">
-      {REPERTOIRE_CATEGORIES.map((cat) => {
-        const colors = cat.value !== "all" ? CATEGORY_COLORS[cat.value] : null;
-        return (
-          <motion.button
-            key={cat.value}
-            type="button"
-            role="tab"
-            aria-selected={value === cat.value}
-            aria-label={`Filter: ${cat.label}`}
-            onClick={() => onChange(cat.value)}
-            whileTap={APPLE_TAP}
-            transition={APPLE_SPRING}
-            className={cn(
-              "shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors touch-manipulation whitespace-nowrap",
-              cat.value === "all"
-                ? value === "all"
-                  ? "bg-gray-800 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800"
-                : value === cat.value
-                  ? cn(colors?.bgActive, "text-white")
-                  : cn(colors?.bg, colors?.text, "hover:opacity-90")
-            )}
-          >
-            {cat.label}
-          </motion.button>
-        );
-      })}
-    </div>
-  )
-);
-CategoryFilter.displayName = "CategoryFilter";
-
-const SECTION_LABEL_REGEX = /^\[.+\]$/;
-
-function formatLyricsWithHighlights(lyrics: string) {
-  return lyrics.split("\n").map((line, i) => {
-    const isLabel = SECTION_LABEL_REGEX.test(line.trim());
-    if (isLabel) {
-      return (
-        <span
-          key={i}
-          className="inline-block mt-4 mb-2 px-3 py-1 rounded-lg bg-amber-200/90 text-amber-950 font-bold text-xs sm:text-sm uppercase tracking-wider first:mt-0"
-        >
-          {line.trim()}
-        </span>
-      );
-    }
-    return (
-      <span key={i} className="block">
-        {line || "\u00A0"}
-      </span>
-    );
-  });
-}
-
-/** Memoized lyrics content – avoids re-parsing on every render */
-const MemoizedLyricsContent = memo(({ lyrics, songId }: { lyrics: string; songId: string }) => {
-  const content = useMemo(() => formatLyricsWithHighlights(lyrics), [lyrics, songId]);
-  return <>{content}</>;
-});
-MemoizedLyricsContent.displayName = "MemoizedLyricsContent";
 
 const LyricsFontToolbar = memo(
   ({
@@ -1040,20 +710,6 @@ const SongItem = memo(
   }
 );
 SongItem.displayName = "SongItem";
-
-function readStoredScrollState(categoryFilter: RepertoireCategory): { scrollTop: number; visibleCount: number } | null {
-  try {
-    const saved = localStorage.getItem(SETLIST_SCROLL_STORAGE_KEY);
-    if (!saved) return null;
-    const parsed = JSON.parse(saved) as { scrollTop?: number; visibleCount?: number; categoryFilter?: string };
-    if (parsed.categoryFilter !== categoryFilter) return null;
-    const scrollTop = typeof parsed.scrollTop === "number" ? parsed.scrollTop : 0;
-    const visibleCount = typeof parsed.visibleCount === "number" ? Math.max(PAGE_SIZE, parsed.visibleCount) : PAGE_SIZE;
-    return scrollTop > 0 || visibleCount > PAGE_SIZE ? { scrollTop, visibleCount } : null;
-  } catch {
-    return null;
-  }
-}
 
 const SetlistSection = memo(
   ({
