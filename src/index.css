@@ -356,7 +356,11 @@ html {
   min-width: 100vw;
 }
 
-/* Band App - Lyrics modal scrollbar */
+/* Band App - Lyrics scroll optimizations (smooth scrolling, layout containment) */
+.lyrics-scroll {
+  contain: layout;
+  scroll-behavior: smooth;
+}
 .lyrics-scroll::-webkit-scrollbar {
   width: 6px;
 }

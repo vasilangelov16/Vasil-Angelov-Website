@@ -7,7 +7,7 @@ Use this checklist before deploying the Band Setlist app to band.vasilangelov.co
 ## Pre-Deploy Verification
 
 - [ ] **Build succeeds**: `npm run build` completes without errors
-- [ ] **145 songs loaded**: `server/data/songs.json` has full repertoire
+- [ ] **147 songs loaded**: `server/data/songs.json` has full repertoire (142 with lyrics)
 - [ ] **Server runs**: `cd server && npm run dev` starts without errors
 - [ ] **Merge main**: Branch is up to date with `origin/main`
 
@@ -53,7 +53,7 @@ Use this checklist before deploying the Band Setlist app to band.vasilangelov.co
 - [ ] Enter Singer PIN → full setlist, search, AI suggest, lyrics
 - [ ] Enter Member PIN → view-only, sees Now Playing + metronome
 - [ ] Wrong PIN → lockout after 5 attempts
-- [ ] All 145 songs visible (scroll or "Load all")
+- [ ] All 147 songs visible (scroll or "Load all")
 - [ ] WebSocket: singer change syncs to member (if `VITE_WS_URL` set)
 - [ ] AI suggestions work (if backend deployed)
 
@@ -61,7 +61,7 @@ Use this checklist before deploying the Band Setlist app to band.vasilangelov.co
 
 ## Features Included
 
-- 145-song repertoire (STRANSKI, EX-YU, Makedonski)
+- 147-song repertoire (STRANSKI, EX-YU, Makedonski, Extras)
 - Infinite scroll + "Load all" button
 - AI suggestions (English→English, Balkan→Balkan)
 - Key, tempo, genre, BPM per song

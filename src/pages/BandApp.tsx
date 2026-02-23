@@ -22,6 +22,14 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 const PAGE_SIZE = 30; // Chunk size for infinite scroll (loads 30 at a time)
+
+/** Normalize text for accent-insensitive search (e.g. "noc" matches "Noć") */
+function normalizeForSearch(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase();
+}
 const BLINK_DURATION = 2600;
 
 // Apple-like spring config — smooth, minimal, elegant
@@ -461,7 +469,8 @@ const SearchBar = memo(
         aria-hidden
       />
       <input
-        type="search"
+        type="text"
+        inputMode="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search songs..."
@@ -471,19 +480,23 @@ const SearchBar = memo(
       />
       <AnimatePresence>
         {value && (
-          <motion.button
-            type="button"
-            onClick={onClear}
+          <motion.div
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.92 }}
             transition={APPLE_SPRING}
-            whileTap={APPLE_TAP}
-            aria-label="Clear search"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 touch-manipulation"
+            className="absolute inset-y-0 right-0 flex items-center pr-1.5"
           >
-            <X className="w-4 h-4" strokeWidth={2.5} />
-          </motion.button>
+            <motion.button
+              type="button"
+              onClick={onClear}
+              whileTap={APPLE_TAP}
+              aria-label="Clear search"
+              className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 touch-manipulation"
+            >
+              <X className="w-4 h-4" strokeWidth={2.5} />
+            </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
     </motion.div>
@@ -584,9 +597,11 @@ const CategoryFilter = memo(
 );
 CategoryFilter.displayName = "CategoryFilter";
 
+const SECTION_LABEL_REGEX = /^\[.+\]$/;
+
 function formatLyricsWithHighlights(lyrics: string) {
   return lyrics.split("\n").map((line, i) => {
-    const isLabel = /^\[.+\]$/.test(line.trim());
+    const isLabel = SECTION_LABEL_REGEX.test(line.trim());
     if (isLabel) {
       return (
         <span
@@ -604,6 +619,13 @@ function formatLyricsWithHighlights(lyrics: string) {
     );
   });
 }
+
+/** Memoized lyrics content – avoids re-parsing on every render */
+const MemoizedLyricsContent = memo(({ lyrics, songId }: { lyrics: string; songId: string }) => {
+  const content = useMemo(() => formatLyricsWithHighlights(lyrics), [lyrics, songId]);
+  return <>{content}</>;
+});
+MemoizedLyricsContent.displayName = "MemoizedLyricsContent";
 
 const LyricsFontToolbar = memo(
   ({
@@ -733,7 +755,7 @@ const LyricsModal = memo(
                 className="lyrics-scroll h-[80dvh] sm:h-[85dvh] lg:h-[88dvh] w-full overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-inset"
               >
                 <div className={cn("px-5 sm:px-8 lg:px-10 py-6 sm:py-8 text-gray-700 leading-loose", LYRICS_FONT_CLASSES[fontSize], isBold && "font-bold")}>
-                  {formatLyricsWithHighlights(song.lyrics!)}
+                  <MemoizedLyricsContent lyrics={song.lyrics!} songId={song.id} />
                 </div>
               </div>
             ) : (
@@ -830,7 +852,7 @@ const SingerLyricsView = memo(({ song }: { song: Song | null }) => {
           {!song.artist && !song.key && !song.bpm && !song.tempo && <div className="mb-6 sm:mb-8" />}
           {hasLyrics ? (
             <div className={cn(LYRICS_FONT_CLASSES[fontSize], isBold && "font-bold", "text-gray-700 leading-relaxed sm:leading-loose")}>
-              {formatLyricsWithHighlights(song.lyrics!)}
+              <MemoizedLyricsContent lyrics={song.lyrics!} songId={song.id} />
             </div>
           ) : (
             <div className={cn("py-12 sm:py-16 text-center text-gray-400", LYRICS_FONT_CLASSES[fontSize], isBold && "font-bold")}>
@@ -1039,13 +1061,14 @@ const SetlistSection = memo(
 
   const filteredSongs = useMemo(() => {
     let list = setlist.filter((s) => matchesCategory(s, categoryFilter));
-    const q = deferredQuery.trim().toLowerCase();
+    const q = deferredQuery.trim();
     if (!q) return list;
+    const qNorm = normalizeForSearch(q);
     return list.filter(
       (s) =>
-        s.title.toLowerCase().includes(q) ||
-        s.artist?.toLowerCase().includes(q) ||
-        s.key?.toLowerCase().includes(q)
+        normalizeForSearch(s.title ?? "").includes(qNorm) ||
+        normalizeForSearch(s.artist ?? "").includes(qNorm) ||
+        normalizeForSearch(s.key ?? "").includes(qNorm)
     );
   }, [setlist, deferredQuery, categoryFilter]);
 

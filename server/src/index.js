@@ -92,6 +92,12 @@ app.get("/api/state", (req, res) => {
   res.json(state);
 });
 
+app.get("/api/songs/:id/lyrics", (req, res) => {
+  const song = REPERTOIRE.find((s) => String(s.id) === String(req.params.id));
+  if (!song) return res.status(404).json({ error: "Not found" });
+  return res.json({ id: song.id, lyrics: song.lyrics || "" });
+});
+
 console.log("[AI] Rule-based song suggestions enabled");
 
 // Circle of fifths (clockwise = dominant direction)

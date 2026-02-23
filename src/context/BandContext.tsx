@@ -37,6 +37,25 @@ const REPERTOIRE = REPERTOIRE_SONGS as Song[];
 
 const STORAGE_KEY = "band-app-state";
 
+/** Deduplicate setlist by title+artist (keep first occurrence). Used for all state sources. */
+function deduplicateSetlist(state: BandState): BandState {
+  const keyToFirstId = new Map<string, string>();
+  const setlist = state.setlist.filter((s) => {
+    const key = `${(s.title || "").toLowerCase()}|${(s.artist || "").toLowerCase()}`;
+    if (keyToFirstId.has(key)) return false;
+    keyToFirstId.set(key, s.id);
+    return true;
+  });
+  if (setlist.length === state.setlist.length) return state;
+  let currentSong = state.currentSong;
+  if (currentSong && !setlist.some((s) => s.id === currentSong!.id)) {
+    const key = `${(currentSong.title || "").toLowerCase()}|${(currentSong.artist || "").toLowerCase()}`;
+    const firstId = keyToFirstId.get(key);
+    currentSong = firstId ? setlist.find((s) => s.id === firstId) ?? null : null;
+  }
+  return { ...state, setlist, currentSong: currentSong ?? state.currentSong };
+}
+
 const BandContext = createContext<BandContextType | null>(null);
 
 const BandStateContext = createContext<{
@@ -91,14 +110,11 @@ const loadState = (): BandState => {
       }
       // Preserve saved setlist order; enrich with full repertoire data when available
       const repertoireMap = new Map(REPERTOIRE.map((s) => [s.id, s]));
-      const setlist = parsed.setlist.map((s) => {
+      const enriched = parsed.setlist.map((s) => {
         const full = repertoireMap.get(s.id);
         return full ? { ...full } : s;
       });
-      return {
-        ...parsed,
-        setlist,
-      };
+      return deduplicateSetlist({ ...parsed, setlist: enriched });
     }
   } catch {
     // Ignore errors
@@ -120,7 +136,13 @@ interface BandProviderProps {
 }
 
 export const BandProvider = memo(function BandProvider({ children, authRole }: BandProviderProps) {
-  const [state, setState] = useState<BandState>(loadState);
+  const [state, setStateRaw] = useState<BandState>(loadState);
+  const setState = useCallback(
+    (action: React.SetStateAction<BandState>) => {
+      setStateRaw((prev) => deduplicateSetlist(typeof action === "function" ? action(prev) : action));
+    },
+    []
+  );
   const [isSinger, setIsSinger] = useState(() => {
     if (authRole === "member") return false;
     return true; // Singer always starts with singer view on each login
