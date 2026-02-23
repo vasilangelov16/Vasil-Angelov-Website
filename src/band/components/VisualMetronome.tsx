@@ -125,7 +125,7 @@ export const VisualMetronome = memo(
             onCheckedChange={onEnabledChange}
             aria-label="Toggle metronome"
             className={cn(
-              "h-7 w-12 [&>span]:bg-white",
+              "h-7 w-12 overflow-hidden [&>span]:bg-white [&[data-state=checked]>span]:translate-x-7",
               enabled
                 ? "data-[state=unchecked]:bg-gray-200/80 data-[state=unchecked]:border-gray-200/80 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
                 : "data-[state=unchecked]:bg-gray-200/70 data-[state=unchecked]:border-gray-200/70 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
