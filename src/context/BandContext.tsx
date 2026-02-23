@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, memo, type ReactNode } from "react";
 import type { BandRole } from "@/components/PinGate";
-import { useBandWebSocket } from "@/hooks/useBandWebSocket";
+import { hasWebSocket, useBandWebSocket } from "@/hooks/useBandWebSocket";
 import REPERTOIRE_SONGS from "@band-songs";
 
 export interface Song {
@@ -52,7 +52,7 @@ function restoreCurrentSongFromStorage(setlist: Song[], currentSong: Song | null
 }
 
 /** Deduplicate setlist by title+artist (keep first occurrence). Used for all state sources. */
-function deduplicateSetlist(state: BandState): BandState {
+export function deduplicateSetlist(state: BandState): BandState {
   const keyToFirstId = new Map<string, string>();
   const setlist = state.setlist.filter((s) => {
     const key = `${(s.title || "").toLowerCase()}|${(s.artist || "").toLowerCase()}`;
@@ -220,7 +220,7 @@ export const BandProvider = memo(function BandProvider({ children, authRole }: B
   }, [state]);
 
   useEffect(() => {
-    if (import.meta.env.VITE_WS_URL) return;
+    if (hasWebSocket()) return;
     const handleStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
         const newState = JSON.parse(e.newValue);
@@ -237,7 +237,7 @@ export const BandProvider = memo(function BandProvider({ children, authRole }: B
   }, [state.lastUpdate]);
 
   useEffect(() => {
-    if (import.meta.env.VITE_WS_URL) return;
+    if (hasWebSocket()) return;
     const interval = setInterval(() => {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {

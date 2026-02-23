@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { BandState, Song } from "@/context/BandContext";
 import REPERTOIRE_SONGS from "@band-songs";
+import { ENV } from "@/lib/env";
 
 const REPERTOIRE = REPERTOIRE_SONGS as Song[];
 const REPERTOIRE_MAP = new Map(REPERTOIRE.map((s) => [s.id, s]));
@@ -72,7 +73,7 @@ function applyDelta(prev: BandState, delta: DeltaPayload): BandState {
   return next;
 }
 
-const rawWsUrl = import.meta.env.VITE_WS_URL as string | undefined;
+const rawWsUrl = ENV.wsUrl;
 
 // Resolve WebSocket URL for all devices and networks:
 // - Explicit VITE_WS_URL: use it (replace localhost with current hostname for LAN)

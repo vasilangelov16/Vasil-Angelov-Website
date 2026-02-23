@@ -11,6 +11,9 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "@band-songs": path.resolve(__dirname, "./server/data/songs.json"),
+    },
   },
 });

@@ -121,7 +121,20 @@ wss.on("connection", (ws) => {
 });
 
 app.get("/health", (req, res) => {
-  res.json({ ok: true, clients: wss.clients.size });
+  const memory = process.memoryUsage();
+  res.json({
+    ok: true,
+    clients: wss.clients.size,
+    uptimeSec: Math.round(process.uptime()),
+    lastUpdate: state.lastUpdate,
+    timestamp: Date.now(),
+    memory: {
+      rss: memory.rss,
+      heapTotal: memory.heapTotal,
+      heapUsed: memory.heapUsed,
+      external: memory.external,
+    },
+  });
 });
 
 app.get("/api/state", (req, res) => {

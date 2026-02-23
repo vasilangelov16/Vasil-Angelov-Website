@@ -1,7 +1,8 @@
 import type { Song } from "@/context/BandContext";
+import { ENV } from "@/lib/env";
 
-const rawApiUrl = import.meta.env.VITE_API_URL as string | undefined;
-const rawWsUrl = import.meta.env.VITE_WS_URL as string | undefined;
+const rawApiUrl = ENV.apiUrl;
+const rawWsUrl = ENV.wsUrl;
 
 function getApiBase(): string | null {
   if (typeof window === "undefined") {

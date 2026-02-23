@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Music, Mic2, Users, Lock, Shield, Check } from "lucide-react";
 import { GrainOverlay } from "@/components/GrainOverlay";
+import { ENV } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "band-app-auth";
@@ -20,8 +21,8 @@ export interface BandAuth {
 }
 
 const CONFIGURED_PINS = (() => {
-  const singer = import.meta.env.VITE_SINGER_PIN || "1234";
-  const member = import.meta.env.VITE_MEMBER_PIN || "5678";
+  const singer = ENV.singerPin;
+  const member = ENV.memberPin;
   return { singer, member } as const;
 })();
 
