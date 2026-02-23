@@ -242,15 +242,15 @@ const CurrentSongDisplay = memo(
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
                     style={{ willChange: "transform, opacity" }}
-                    className={cn("inline-flex items-center gap-1.5", labelClass)}
+                    className={cn("inline-flex items-center gap-1.5 transition-all duration-450", labelClass)}
                   >
-                    <span className={cn("relative flex", dotClass)}>
+                    <span className={cn("relative flex transition-all duration-450", dotClass)}>
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
                       <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600" />
                     </span>
                     <span
                       className={cn(
-                        "text-emerald-700 font-bold uppercase tracking-[0.15em]",
+                        "text-emerald-700 font-bold uppercase tracking-[0.15em] transition-all duration-450",
                         labelTextClass
                       )}
                     >
@@ -259,14 +259,13 @@ const CurrentSongDisplay = memo(
                   </motion.div>
 
                   <motion.h1
-                    key={`title-${isFullscreen}`}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.4, delay: 0.05, ease: [0.32, 0.72, 0, 1] }}
                     style={{ willChange: "transform, opacity" }}
                     className={cn(
-                      "font-serif font-black text-gray-950 leading-[1.1] tracking-tight transition-all duration-450",
+                      "font-serif font-black text-gray-950 leading-[1.1] tracking-tight transition-all duration-450 ease-out",
                       titleClass
                     )}
                     aria-live="polite"
@@ -277,31 +276,29 @@ const CurrentSongDisplay = memo(
 
                   {currentSong.artist && (
                     <motion.p
-                      key={`artist-${isFullscreen}`}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.35, delay: 0.1, ease: [0.32, 0.72, 0, 1] }}
                       style={{ willChange: "transform, opacity" }}
-                      className={cn("text-gray-500 transition-all duration-450", artistClass)}
+                      className={cn("text-gray-500 transition-all duration-450 ease-out", artistClass)}
                     >
                       {currentSong.artist}
                     </motion.p>
                   )}
 
                   <motion.div
-                    key={`badges-${isFullscreen}`}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.35, delay: 0.15, ease: [0.32, 0.72, 0, 1] }}
                     style={{ willChange: "transform, opacity" }}
-                    className={cn("flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap transition-all duration-450", badgesClass)}
+                    className={cn("flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap transition-all duration-450 ease-out", badgesClass)}
                   >
                     {currentSong.key && (
                       <span
                         className={cn(
-                          "rounded-full bg-gray-900 text-white font-bold transition-all duration-450",
+                          "rounded-full bg-gray-900 text-white font-bold transition-all duration-450 ease-out",
                           badgeClass
                         )}
                       >
@@ -311,7 +308,7 @@ const CurrentSongDisplay = memo(
                     {currentSong.bpm && (
                       <span
                         className={cn(
-                          "rounded-full bg-gray-100 text-gray-600 font-semibold transition-all duration-450",
+                          "rounded-full bg-gray-100 text-gray-600 font-semibold transition-all duration-450 ease-out",
                           badgeClassMuted
                         )}
                       >
@@ -321,7 +318,7 @@ const CurrentSongDisplay = memo(
                     {currentSong.tempo && (
                       <span
                         className={cn(
-                          "rounded-full bg-amber-400 text-amber-950 font-bold transition-all duration-450",
+                          "rounded-full bg-amber-400 text-amber-950 font-bold transition-all duration-450 ease-out",
                           badgeClassMuted
                         )}
                       >
