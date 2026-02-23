@@ -110,6 +110,7 @@ const CurrentSongDisplay = memo(
 
   return (
     <motion.div
+      layout="position"
       role={isClickable ? "button" : undefined}
       tabIndex={isClickable ? 0 : undefined}
       onClick={isClickable ? onScrollToCurrent : undefined}
@@ -124,10 +125,10 @@ const CurrentSongDisplay = memo(
           : undefined
       }
       whileTap={isClickable ? APPLE_TAP : undefined}
-      transition={APPLE_SPRING}
+      transition={{ layout: { duration: 0.4, ease: [0.32, 0.72, 0, 1] } }}
       title={isClickable ? "Tap to scroll to song in list" : undefined}
       className={cn(
-        "relative w-full overflow-hidden",
+        "relative w-full overflow-hidden will-change-transform",
         compact && "bg-white/90 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
         !compact && "bg-white flex-1 min-h-0 flex flex-col items-center justify-center",
         isClickable && "cursor-pointer touch-manipulation active:bg-gray-50/80"
@@ -163,12 +164,13 @@ const CurrentSongDisplay = memo(
           {currentSong ? (
             <motion.div
               key={currentSong.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
+              layout="position"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
               className={cn(
-                "absolute inset-0 w-full flex items-center gap-2.5 sm:gap-3",
+                "absolute inset-0 w-full flex items-center gap-2.5 sm:gap-3 will-change-transform",
                 compact
                   ? "flex-row justify-start text-left px-5 sm:px-6"
                   : "flex-col justify-center px-6 sm:px-10 md:px-14 lg:px-20"
@@ -271,12 +273,12 @@ const CurrentSongDisplay = memo(
             </motion.div>
           ) : (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
               className={cn(
-                "absolute inset-0 flex items-center w-full",
+                "absolute inset-0 flex items-center w-full will-change-transform",
                 compact ? "flex-row gap-2.5 justify-start px-5 sm:px-6" : "flex-col justify-center px-6 sm:px-10"
               )}
             >
@@ -1415,35 +1417,39 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
       {!(authRole === "singer" && singerViewMode === "lyrics") && (
         <motion.div
           onClick={authRole === "member" ? handleDoubleTap : undefined}
-          layout
-          transition={{
-            layout: { duration: 0.4, ease: [0.32, 0.72, 0, 1] },
+          animate={{
+            margin: isFullscreen ? 0 : isSinger ? "0.375rem 0.375rem" : "0.5rem 0.75rem",
+            borderRadius: isFullscreen ? 0 : 16,
+            padding: isFullscreen ? 0 : isSinger ? "3px" : "3px",
           }}
+          transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
+          style={{ willChange: "transform, opacity" }}
           className={cn(
-            "bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-[0_4px_24px_rgba(245,158,11,0.25)] transition-all duration-400",
-            isSinger ? "mx-1.5 my-1 flex-shrink-0 rounded-2xl p-[3px] sm:p-[4px]" : isFullscreen ? "m-0 flex-1 min-h-0 flex flex-col rounded-none p-0" : "mx-2 sm:mx-3 my-2 sm:my-3 flex-1 min-h-0 flex flex-col rounded-2xl p-[3px] sm:p-[4px]",
+            "bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-[0_4px_24px_rgba(245,158,11,0.25)]",
+            isSinger ? "flex-shrink-0" : "flex-1 min-h-0 flex flex-col",
             authRole === "member" && "touch-manipulation"
           )}
         >
           <motion.div
-            layout
-            transition={{
-              layout: { duration: 0.4, ease: [0.32, 0.72, 0, 1] },
+            animate={{
+              borderRadius: isFullscreen ? 0 : 13,
             }}
+            transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
+            style={{ willChange: "transform" }}
             className={cn(
-              "overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col shadow-inner transition-all duration-400",
-              isFullscreen ? "rounded-none" : "rounded-[13px] sm:rounded-[14px]",
+              "overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col shadow-inner",
               isSinger ? "min-h-0" : "flex-1 min-h-0"
             )}
           >
           <motion.div
-            layout
-            transition={{
-              layout: { duration: 0.4, ease: [0.32, 0.72, 0, 1] },
+            animate={{
+              borderRadius: isFullscreen ? 0 : 12,
+              margin: isFullscreen ? 0 : 4,
             }}
+            transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
+            style={{ willChange: "transform" }}
             className={cn(
-              "overflow-hidden bg-white flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-400",
-              isFullscreen ? "rounded-none m-0" : "rounded-xl m-0.5 sm:m-1",
+              "overflow-hidden bg-white flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
               isSinger ? "min-h-0" : "flex-1 min-h-0"
             )}
           >
