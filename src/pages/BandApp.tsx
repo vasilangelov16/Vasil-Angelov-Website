@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 const PAGE_SIZE = 30; // Chunk size for infinite scroll (loads 30 at a time)
+const SETLIST_SCROLL_STORAGE_KEY = "band-app-setlist-scroll";
 
 /** Normalize text for accent-insensitive search (e.g. "noc" matches "Noć") */
 function normalizeForSearch(text: string): string {
@@ -1033,19 +1034,31 @@ const SongItem = memo(
 );
 SongItem.displayName = "SongItem";
 
+function readStoredScrollState(categoryFilter: RepertoireCategory): { scrollTop: number; visibleCount: number } | null {
+  try {
+    const saved = localStorage.getItem(SETLIST_SCROLL_STORAGE_KEY);
+    if (!saved) return null;
+    const parsed = JSON.parse(saved) as { scrollTop?: number; visibleCount?: number; categoryFilter?: string };
+    if (parsed.categoryFilter !== categoryFilter) return null;
+    const scrollTop = typeof parsed.scrollTop === "number" ? parsed.scrollTop : 0;
+    const visibleCount = typeof parsed.visibleCount === "number" ? Math.max(PAGE_SIZE, parsed.visibleCount) : PAGE_SIZE;
+    return scrollTop > 0 || visibleCount > PAGE_SIZE ? { scrollTop, visibleCount } : null;
+  } catch {
+    return null;
+  }
+}
+
 const SetlistSection = memo(
   ({
     searchQuery,
     categoryFilter,
     authRole,
     scrollToCurrentSongRef,
-    listScrollPositionRef,
   }: {
     searchQuery: string;
     categoryFilter: RepertoireCategory;
     authRole: BandAuth["role"];
     scrollToCurrentSongRef?: React.MutableRefObject<(() => void) | null>;
-    listScrollPositionRef?: React.MutableRefObject<number>;
   }) => {
     const deferredQuery = useDeferredValue(searchQuery);
     const { state, setCurrentSong, reorderSetlistWithSuggestions } = useBandState();
@@ -1055,11 +1068,14 @@ const SetlistSection = memo(
     const recentlySuggestedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [lyricsSong, setLyricsSong] = useState<Song | null>(null);
     const [lyricsOpen, setLyricsOpen] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [scrollTarget, setScrollTarget] = useState<{ type: "song"; id: string } | { type: "ai"; currentId: string; lastSuggestedId: string } | null>(null);
-  const loadMoreThrottleRef = useRef<number | null>(null);
+    const storedScroll = useMemo(() => readStoredScrollState(categoryFilter), [categoryFilter]);
+    const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+    const loadMoreRef = useRef<HTMLDivElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const visibleCountRef = useRef(visibleCount);
+    visibleCountRef.current = visibleCount;
+    const [scrollTarget, setScrollTarget] = useState<{ type: "song"; id: string } | { type: "ai"; currentId: string; lastSuggestedId: string } | null>(null);
+    const loadMoreThrottleRef = useRef<number | null>(null);
 
   const filteredSongs = useMemo(() => {
     let list = setlist.filter((s) => matchesCategory(s, categoryFilter));
@@ -1080,6 +1096,19 @@ const SetlistSection = memo(
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [deferredQuery, categoryFilter]);
+
+  // Restore scroll position from localStorage on mount (page refresh)
+  useEffect(() => {
+    const saved = storedScroll;
+    if (!saved) return;
+    setVisibleCount(saved.visibleCount);
+    const id = setTimeout(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = saved.scrollTop;
+      }
+    }, 150);
+    return () => clearTimeout(id);
+  }, [storedScroll]);
 
   useEffect(() => {
     return () => {
@@ -1119,9 +1148,27 @@ const SetlistSection = memo(
       observer.observe(el);
     }
 
+    let saveTimeout: ReturnType<typeof setTimeout> | null = null;
     const onScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = root;
       if (scrollHeight - scrollTop - clientHeight < 150) doLoadMore();
+      if (!saveTimeout) {
+        saveTimeout = setTimeout(() => {
+          saveTimeout = null;
+          try {
+            localStorage.setItem(
+              SETLIST_SCROLL_STORAGE_KEY,
+              JSON.stringify({
+                scrollTop: root.scrollTop,
+                visibleCount: visibleCountRef.current,
+                categoryFilter,
+              })
+            );
+          } catch {
+            /* ignore */
+          }
+        }, 150);
+      }
     };
     root.addEventListener("scroll", onScroll, { passive: true });
 
@@ -1129,8 +1176,9 @@ const SetlistSection = memo(
       observer?.disconnect();
       root.removeEventListener("scroll", onScroll);
       if (loadMoreThrottleRef.current) cancelAnimationFrame(loadMoreThrottleRef.current);
+      if (saveTimeout) clearTimeout(saveTimeout);
     };
-  }, [filteredSongs.length, visibleCount]);
+  }, [filteredSongs.length, visibleCount, categoryFilter]);
 
   // Scroll after layout animation settles (LAYOUT_SPRING ~550ms)
   useEffect(() => {
@@ -1256,29 +1304,6 @@ const SetlistSection = memo(
       };
     }
   }, [scrollToCurrentSong, scrollToCurrentSongRef]);
-
-  // Save scroll position when unmounting (e.g. switching to lyrics view)
-  useEffect(() => {
-    if (!listScrollPositionRef) return;
-    return () => {
-      if (scrollRef.current) {
-        listScrollPositionRef.current = scrollRef.current.scrollTop;
-      }
-    };
-  }, [listScrollPositionRef]);
-
-  // Restore scroll position when mounting (e.g. switching back from lyrics view)
-  useEffect(() => {
-    if (!listScrollPositionRef) return;
-    const saved = listScrollPositionRef.current;
-    if (saved <= 0) return;
-    const raf = requestAnimationFrame(() => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = saved;
-      }
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [listScrollPositionRef]);
 
   if (filteredSongs.length === 0) {
     const isSearch = deferredQuery.trim().length > 0;
@@ -1416,7 +1441,6 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
     }
   });
   const scrollToCurrentSongRef = useRef<(() => void) | null>(null);
-  const listScrollPositionRef = useRef(0);
 
   useEffect(() => {
     try {
@@ -1696,48 +1720,47 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
 
       {authRole === "singer" && (
         <div className="flex-1 min-h-0 flex flex-col bg-white relative overflow-hidden">
-          <AnimatePresence mode="sync">
-            {singerViewMode === "setlist" ? (
-              <motion.div
-                key="setlist"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
-                className="absolute inset-0 flex flex-col"
-              >
-                <div className="flex-shrink-0 px-2 py-1.5 bg-gray-50 space-y-2">
-                  <SearchBar
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    onClear={handleSearchClear}
-                  />
-                  <CategoryFilter
-                    value={categoryFilter}
-                    onChange={handleCategoryChange}
-                  />
-                </div>
-                <SetlistSection
-                  searchQuery={searchQuery}
-                  categoryFilter={categoryFilter}
-                  authRole={authRole}
-                  scrollToCurrentSongRef={scrollToCurrentSongRef}
-                  listScrollPositionRef={listScrollPositionRef}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="lyrics"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
-                className="absolute inset-0 flex flex-col"
-              >
-                <SingerLyricsView song={state.currentSong} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Keep both views mounted to preserve setlist scroll position when switching */}
+          <motion.div
+            initial={false}
+            animate={{
+              opacity: singerViewMode === "setlist" ? 1 : 0,
+              pointerEvents: singerViewMode === "setlist" ? "auto" : "none",
+              zIndex: singerViewMode === "setlist" ? 10 : 0,
+            }}
+            transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
+            className="absolute inset-0 flex flex-col"
+          >
+            <div className="flex-shrink-0 px-2 py-1.5 bg-gray-50 space-y-2">
+              <SearchBar
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onClear={handleSearchClear}
+              />
+              <CategoryFilter
+                value={categoryFilter}
+                onChange={handleCategoryChange}
+              />
+            </div>
+            <SetlistSection
+              searchQuery={searchQuery}
+              categoryFilter={categoryFilter}
+              authRole={authRole}
+              scrollToCurrentSongRef={scrollToCurrentSongRef}
+            />
+          </motion.div>
+          <motion.div
+            initial={false}
+            animate={{
+              opacity: singerViewMode === "lyrics" ? 1 : 0,
+              pointerEvents: singerViewMode === "lyrics" ? "auto" : "none",
+              zIndex: singerViewMode === "lyrics" ? 10 : 0,
+            }}
+            transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
+            className="absolute inset-0 flex flex-col"
+          >
+            <SingerLyricsView song={state.currentSong} />
+          </motion.div>
         </div>
       )}
     </div>

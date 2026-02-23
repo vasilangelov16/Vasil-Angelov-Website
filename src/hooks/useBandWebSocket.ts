@@ -158,7 +158,9 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
                 if (enriched.lastUpdate >= prev.lastUpdate) {
                   setHasUpdateRef.current(true);
                   setTimeout(() => setHasUpdateRef.current(false), 2500);
-                  return enriched;
+                  // Preserve local currentSong on refresh: server often has null after restart
+                  const currentSong = enriched.currentSong ?? prev.currentSong;
+                  return { ...enriched, currentSong };
                 }
                 return prev;
               });

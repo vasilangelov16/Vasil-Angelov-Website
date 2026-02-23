@@ -36,6 +36,7 @@ interface BandContextType {
 const REPERTOIRE = REPERTOIRE_SONGS as Song[];
 
 const STORAGE_KEY = "band-app-state";
+const CURRENT_SONG_ID_KEY = "band-app-current-song-id";
 
 /** Deduplicate setlist by title+artist (keep first occurrence). Used for all state sources. */
 function deduplicateSetlist(state: BandState): BandState {
@@ -99,22 +100,40 @@ const loadState = (): BandState => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved) as BandState;
-      // If saved setlist has fewer songs than repertoire (e.g. after adding songs to songs.json),
-      // use full repertoire so user sees all songs
+      let setlist: Song[];
+      let currentSong: Song | null = parsed.currentSong ?? null;
+
+      if (parsed.setlist.length < REPERTOIRE.length) {
+        setlist = [...REPERTOIRE];
+      } else {
+        const repertoireMap = new Map(REPERTOIRE.map((s) => [s.id, s]));
+        setlist = parsed.setlist.map((s) => {
+          const full = repertoireMap.get(s.id);
+          return full ? { ...full } : s;
+        });
+      }
+
+      // Resolve currentSong from setlist; fallback to CURRENT_SONG_ID_KEY (saved immediately on select)
+      if (currentSong) {
+        const found = setlist.find((s) => s.id === currentSong!.id);
+        currentSong = found ?? null;
+      }
+      if (!currentSong) {
+        const savedId = localStorage.getItem(CURRENT_SONG_ID_KEY);
+        if (savedId) {
+          const found = setlist.find((s) => s.id === savedId);
+          currentSong = found ?? null;
+        }
+      }
+
       if (parsed.setlist.length < REPERTOIRE.length) {
         return {
-          currentSong: parsed.currentSong,
-          setlist: [...REPERTOIRE],
+          currentSong,
+          setlist,
           lastUpdate: Date.now(),
         };
       }
-      // Preserve saved setlist order; enrich with full repertoire data when available
-      const repertoireMap = new Map(REPERTOIRE.map((s) => [s.id, s]));
-      const enriched = parsed.setlist.map((s) => {
-        const full = repertoireMap.get(s.id);
-        return full ? { ...full } : s;
-      });
-      return deduplicateSetlist({ ...parsed, setlist: enriched });
+      return deduplicateSetlist({ ...parsed, setlist, currentSong });
     }
   } catch {
     // Ignore errors
@@ -128,6 +147,15 @@ const loadState = (): BandState => {
 
 const saveState = (state: BandState) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try {
+    if (state.currentSong) {
+      localStorage.setItem(CURRENT_SONG_ID_KEY, state.currentSong.id);
+    } else {
+      localStorage.removeItem(CURRENT_SONG_ID_KEY);
+    }
+  } catch {
+    /* ignore */
+  }
 };
 
 interface BandProviderProps {
@@ -210,6 +238,15 @@ export const BandProvider = memo(function BandProvider({ children, authRole }: B
   const setCurrentSong = useCallback(
     (song: Song | null) => {
       if (authRole !== "singer") return;
+      try {
+        if (song) {
+          localStorage.setItem(CURRENT_SONG_ID_KEY, song.id);
+        } else {
+          localStorage.removeItem(CURRENT_SONG_ID_KEY);
+        }
+      } catch {
+        /* ignore */
+      }
       const now = Date.now();
       setState((prev) => {
         const next = { ...prev, currentSong: song, lastUpdate: now };
@@ -241,12 +278,20 @@ export const BandProvider = memo(function BandProvider({ children, authRole }: B
   const removeSong = useCallback(
     (id: string) => {
       if (authRole !== "singer") return;
-      const now = Date.now();
       setState((prev) => {
+        const clearingCurrent = prev.currentSong?.id === id;
+        if (clearingCurrent) {
+          try {
+            localStorage.removeItem(CURRENT_SONG_ID_KEY);
+          } catch {
+            /* ignore */
+          }
+        }
+        const now = Date.now();
         const next = {
           ...prev,
           setlist: prev.setlist.filter((s) => s.id !== id),
-          currentSong: prev.currentSong?.id === id ? null : prev.currentSong,
+          currentSong: clearingCurrent ? null : prev.currentSong,
           lastUpdate: now,
         };
         sendUpdate(next, prev);
