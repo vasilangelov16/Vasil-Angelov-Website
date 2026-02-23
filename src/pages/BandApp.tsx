@@ -1208,9 +1208,18 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
           <motion.header
             key="header"
             initial={false}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            transition={{ duration: 0.3, ease: APPLE_EASE }}
+            animate={{ 
+              y: 0, 
+              opacity: 1,
+              height: "auto"
+            }}
+            exit={{ 
+              y: -60, 
+              opacity: 0,
+              height: 0,
+              transition: { duration: 0.35, ease: [0.32, 0.72, 0, 1] }
+            }}
+            transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
             className="flex-shrink-0 px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)] transition-colors duration-200">
         <div className="flex items-center gap-2 min-w-0 flex-1 justify-start">
           <motion.button
@@ -1404,24 +1413,36 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
       />
 
       {!(authRole === "singer" && singerViewMode === "lyrics") && (
-        <div
+        <motion.div
           onClick={authRole === "member" ? handleDoubleTap : undefined}
+          layout
+          transition={{
+            layout: { duration: 0.4, ease: [0.32, 0.72, 0, 1] },
+          }}
           className={cn(
-            "rounded-2xl p-[3px] sm:p-[4px] bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-[0_4px_24px_rgba(245,158,11,0.25)]",
-            isSinger ? "mx-1.5 my-1 flex-shrink-0" : isFullscreen ? "m-0 flex-1 min-h-0 flex flex-col rounded-none" : "mx-2 sm:mx-3 my-2 sm:my-3 flex-1 min-h-0 flex flex-col",
+            "bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-[0_4px_24px_rgba(245,158,11,0.25)] transition-all duration-400",
+            isSinger ? "mx-1.5 my-1 flex-shrink-0 rounded-2xl p-[3px] sm:p-[4px]" : isFullscreen ? "m-0 flex-1 min-h-0 flex flex-col rounded-none p-0" : "mx-2 sm:mx-3 my-2 sm:my-3 flex-1 min-h-0 flex flex-col rounded-2xl p-[3px] sm:p-[4px]",
             authRole === "member" && "touch-manipulation"
           )}
         >
-          <div
+          <motion.div
+            layout
+            transition={{
+              layout: { duration: 0.4, ease: [0.32, 0.72, 0, 1] },
+            }}
             className={cn(
-              "overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col shadow-inner",
+              "overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col shadow-inner transition-all duration-400",
               isFullscreen ? "rounded-none" : "rounded-[13px] sm:rounded-[14px]",
               isSinger ? "min-h-0" : "flex-1 min-h-0"
             )}
           >
-          <div
+          <motion.div
+            layout
+            transition={{
+              layout: { duration: 0.4, ease: [0.32, 0.72, 0, 1] },
+            }}
             className={cn(
-              "overflow-hidden bg-white flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+              "overflow-hidden bg-white flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-400",
               isFullscreen ? "rounded-none m-0" : "rounded-xl m-0.5 sm:m-1",
               isSinger ? "min-h-0" : "flex-1 min-h-0"
             )}
@@ -1456,9 +1477,9 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                   : undefined
               }
             />
-          </div>
-          </div>
-        </div>
+          </motion.div>
+          </motion.div>
+        </motion.div>
       )}
 
       {authRole === "singer" && (
