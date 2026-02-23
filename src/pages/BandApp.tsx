@@ -29,8 +29,7 @@ import {
   APPLE_SPRING_GENTLE,
   APPLE_EASE,
   FADE_DURATION,
-  VIEW_SWITCH_DURATION,
-  VIEW_SWITCH_EASE,
+  VIEW_SWITCH_TRANSITION,
   BLINK_COLORS,
   BLINK_ANIMATE_COLORS,
   BLINK_TIMES,
@@ -1405,7 +1404,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
               pointerEvents: singerViewMode === "setlist" ? "auto" : "none",
               zIndex: singerViewMode === "setlist" ? 10 : 0,
             }}
-            transition={{ duration: VIEW_SWITCH_DURATION, ease: VIEW_SWITCH_EASE }}
+            transition={VIEW_SWITCH_TRANSITION}
             className="absolute inset-0 flex flex-col"
           >
             <div className="flex-shrink-0 px-2 py-1.5 bg-gray-50 space-y-2">
@@ -1433,7 +1432,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
               pointerEvents: singerViewMode === "lyrics" ? "auto" : "none",
               zIndex: singerViewMode === "lyrics" ? 10 : 0,
             }}
-            transition={{ duration: VIEW_SWITCH_DURATION, ease: VIEW_SWITCH_EASE }}
+            transition={VIEW_SWITCH_TRANSITION}
             className="absolute inset-0 flex flex-col"
           >
             <SingerLyricsView song={state.currentSong} />

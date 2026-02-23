@@ -14,8 +14,13 @@ export const LAYOUT_TWEEN = { duration: 0.45, ease: [0.32, 0.72, 0, 1] as const 
 export const APPLE_TAP = { scale: 0.98 };
 export const APPLE_EASE = [0.32, 0.72, 0, 1] as const;
 export const FADE_DURATION = 0.25;
-export const VIEW_SWITCH_DURATION = 0.4;
-export const VIEW_SWITCH_EASE = [0.22, 0.61, 0.36, 1] as const; // gentle ease-out
+/** Apple-like view switch: spring for organic feel, no overshoot on opacity */
+export const VIEW_SWITCH_TRANSITION = {
+  type: "spring" as const,
+  stiffness: 280,
+  damping: 30,
+  mass: 0.8,
+} as const;
 
 export const BLINK_COLORS = ["#fbbf24", "#ffffff"] as const;
 export const BLINK_TIMES = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] as const;
