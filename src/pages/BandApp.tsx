@@ -1502,7 +1502,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
           className={cn(
             "bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-[0_4px_24px_rgba(245,158,11,0.25)]",
             isSinger ? "flex-shrink-0" : "flex-1 min-h-0 flex flex-col",
-            authRole === "member" && "touch-manipulation"
+            authRole === "member" && "touch-manipulation relative z-10"
           )}
         >
           <motion.div
