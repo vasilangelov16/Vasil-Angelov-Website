@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, memo } from "react";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { Switch } from "@/components/ui/switch";
+import ReactSwitch from "react-switch";
 import { cn } from "@/lib/utils";
 import {
   APPLE_SPRING,
@@ -120,16 +120,22 @@ export const VisualMetronome = memo(
           <span className="text-[10px] font-medium uppercase tracking-wider text-gray-600">
             {enabled ? "On" : "Off"}
           </span>
-          <Switch
+          <ReactSwitch
             checked={enabled}
-            onCheckedChange={onEnabledChange}
+            onChange={onEnabledChange}
+            onColor="#dc2626"
+            offColor="#e5e7eb"
+            onHandleColor="#ffffff"
+            offHandleColor="#ffffff"
+            handleDiameter={24}
+            uncheckedIcon={false}
+            checkedIcon={false}
+            boxShadow="0 2px 4px rgba(0,0,0,0.1)"
+            activeBoxShadow="0 0 2px 3px rgba(220, 38, 38, 0.2)"
+            height={28}
+            width={48}
+            className="react-switch"
             aria-label="Toggle metronome"
-            className={cn(
-              "h-7 w-12 [&>span]:h-6 [&>span]:w-6 [&>span]:data-[state=checked]:translate-x-[22px] [&>span]:data-[state=unchecked]:translate-x-0.5",
-              enabled
-                ? "data-[state=unchecked]:bg-gray-200/80 data-[state=unchecked]:border-gray-200/80 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                : "data-[state=unchecked]:bg-gray-200/70 data-[state=unchecked]:border-gray-200/70 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-            )}
           />
         </label>
       </div>
