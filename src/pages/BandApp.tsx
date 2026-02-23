@@ -164,13 +164,12 @@ const CurrentSongDisplay = memo(
           {currentSong ? (
             <motion.div
               key={currentSong.id}
-              layout="position"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
               className={cn(
-                "absolute inset-0 w-full flex items-center gap-2.5 sm:gap-3 will-change-transform",
+                "absolute inset-0 w-full flex items-center gap-2.5 sm:gap-3",
                 compact
                   ? "flex-row justify-start text-left px-5 sm:px-6"
                   : "flex-col justify-center px-6 sm:px-10 md:px-14 lg:px-20"
@@ -184,14 +183,26 @@ const CurrentSongDisplay = memo(
                     )}
                     <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600 ring-2 ring-emerald-500/20" />
                   </span>
-                  <h1
+                  <motion.h1
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+                    style={{ willChange: "transform, opacity" }}
                     className="font-serif font-black text-gray-950 truncate flex-1 min-w-0 text-[18px] sm:text-[20px] leading-tight tracking-tight drop-shadow-sm"
                     aria-live="polite"
                     aria-atomic="true"
                   >
                     {currentSong.title}
-                  </h1>
-                  <div className="flex items-center gap-2 shrink-0">
+                  </motion.h1>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.3, delay: 0.05, ease: [0.32, 0.72, 0, 1] }}
+                    style={{ willChange: "transform, opacity" }}
+                    className="flex items-center gap-2 shrink-0"
+                  >
                     {currentSong.key && (
                       <span className="rounded-lg bg-gray-900 px-2.5 py-0.5 text-[11px] sm:text-xs font-bold text-white tabular-nums shadow-sm">
                         {currentSong.key}
@@ -202,11 +213,18 @@ const CurrentSongDisplay = memo(
                         {currentSong.bpm}
                       </span>
                     )}
-                  </div>
+                  </motion.div>
                 </>
               ) : (
                 <>
-                  <div className={cn("inline-flex items-center gap-1.5", labelClass)}>
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+                    style={{ willChange: "transform, opacity" }}
+                    className={cn("inline-flex items-center gap-1.5", labelClass)}
+                  >
                     <span className={cn("relative flex", dotClass)}>
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
                       <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600" />
@@ -219,9 +237,14 @@ const CurrentSongDisplay = memo(
                     >
                       Now Playing
                     </span>
-                  </div>
+                  </motion.div>
 
-                  <h1
+                  <motion.h1
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.35, delay: 0.05, ease: [0.32, 0.72, 0, 1] }}
+                    style={{ willChange: "transform, opacity" }}
                     className={cn(
                       "font-serif font-black text-gray-950 leading-[1.1] tracking-tight",
                       titleClass
@@ -230,13 +253,29 @@ const CurrentSongDisplay = memo(
                     aria-atomic="true"
                   >
                     {currentSong.title}
-                  </h1>
+                  </motion.h1>
 
                   {currentSong.artist && (
-                    <p className={cn("text-gray-500", artistClass)}>{currentSong.artist}</p>
+                    <motion.p
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.3, delay: 0.1, ease: [0.32, 0.72, 0, 1] }}
+                      style={{ willChange: "transform, opacity" }}
+                      className={cn("text-gray-500", artistClass)}
+                    >
+                      {currentSong.artist}
+                    </motion.p>
                   )}
 
-                  <div className={cn("flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap", badgesClass)}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3, delay: 0.15, ease: [0.32, 0.72, 0, 1] }}
+                    style={{ willChange: "transform, opacity" }}
+                    className={cn("flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap", badgesClass)}
+                  >
                     {currentSong.key && (
                       <span
                         className={cn(
@@ -267,7 +306,7 @@ const CurrentSongDisplay = memo(
                         {currentSong.tempo}
                       </span>
                     )}
-                  </div>
+                  </motion.div>
                 </>
               )}
             </motion.div>
