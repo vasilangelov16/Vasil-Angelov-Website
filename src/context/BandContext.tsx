@@ -213,7 +213,7 @@ export const BandProvider = memo(function BandProvider({ children, authRole }: B
       const now = Date.now();
       setState((prev) => {
         const next = { ...prev, currentSong: song, lastUpdate: now };
-        sendUpdate(next);
+        sendUpdate(next, prev);
         return next;
       });
     },
@@ -231,7 +231,7 @@ export const BandProvider = memo(function BandProvider({ children, authRole }: B
           setlist: [...prev.setlist, newSong],
           lastUpdate: now,
         };
-        sendUpdate(next);
+        sendUpdate(next, prev);
         return next;
       });
     },
@@ -249,7 +249,7 @@ export const BandProvider = memo(function BandProvider({ children, authRole }: B
           currentSong: prev.currentSong?.id === id ? null : prev.currentSong,
           lastUpdate: now,
         };
-        sendUpdate(next);
+        sendUpdate(next, prev);
         return next;
       });
     },
@@ -276,8 +276,8 @@ export const BandProvider = memo(function BandProvider({ children, authRole }: B
         const after = setlist.slice(currentIndex + 1).filter((s) => !suggestedSet.has(String(s.id)));
 
         const newSetlist = [...before, effectiveCurrent, ...suggestedSongs, ...after];
-        const next = { ...prev, setlist: newSetlist, lastUpdate: now };
-        sendUpdate(next);
+        const next = { ...prev, setlist: newSetlist, lastUpdate: now         };
+        sendUpdate(next, prev);
         return next;
       });
     },

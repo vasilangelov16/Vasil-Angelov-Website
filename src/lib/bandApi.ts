@@ -49,7 +49,7 @@ export async function fetchAISuggestions(
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentSongId, setlist }),
+      body: JSON.stringify({ currentSongId, setlistIds: setlist.map((s) => s.id) }),
       signal: controller.signal,
     });
     if (!res.ok) {

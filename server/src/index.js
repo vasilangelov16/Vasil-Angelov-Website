@@ -16,6 +16,7 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 const SONGS_PATH = join(__dirname, "../data/songs.json");
 const REPERTOIRE = JSON.parse(readFileSync(SONGS_PATH, "utf-8"));
 const repertoireIds = new Set(REPERTOIRE.map((s) => s.id));
+const REPERTOIRE_MAP = new Map(REPERTOIRE.map((s) => [String(s.id), s]));
 
 let state = {
   currentSong: null,
@@ -73,6 +74,7 @@ wss.on("connection", (ws) => {
       if (!payload || typeof payload !== "object") return;
 
       const now = Date.now();
+      const prev = state;
       const next = { ...state, lastUpdate: now };
       const repertoireMap = new Map(REPERTOIRE.map((s) => [String(s.id), s]));
 
@@ -92,9 +94,26 @@ wss.on("connection", (ws) => {
           return fromRep ? { ...fromRep } : s;
         });
       }
+      if (Array.isArray(payload.setlistIds)) {
+        next.setlist = payload.setlistIds
+          .map((id) => repertoireMap.get(String(id)))
+          .filter(Boolean);
+      }
 
       state = next;
-      broadcast({ type: "state", payload: state });
+
+      // Delta sync: broadcast only what changed (~200B vs ~45KB for song change)
+      const delta = { lastUpdate: next.lastUpdate };
+      const currentId = (s) => (s && typeof s === "object" ? String(s.id) : null);
+      if (currentId(next.currentSong) !== currentId(prev.currentSong)) {
+        delta.currentSong = next.currentSong ? stripLyricsForSync(next.currentSong) : null;
+      }
+      const prevIds = (prev.setlist || []).map((s) => String(s.id)).join(",");
+      const nextIds = (next.setlist || []).map((s) => String(s.id)).join(",");
+      if (nextIds !== prevIds) {
+        delta.setlistIds = (next.setlist || []).map((s) => s.id);
+      }
+      broadcast({ type: "delta", payload: delta });
     } catch {
       // ignore invalid messages
     }
@@ -323,15 +342,17 @@ function ruleBasedSuggestions(currentSong, setlist, count = 3) {
 
 app.post("/api/ai-suggestions", (req, res) => {
   try {
-    const { currentSongId, setlist } = req.body;
-    if (!currentSongId || !Array.isArray(setlist) || setlist.length < 4) {
-      return res.status(400).json({ error: "Need currentSongId and setlist with at least 4 songs" });
+    const { currentSongId, setlist, setlistIds } = req.body;
+    const ids = Array.isArray(setlistIds) ? setlistIds : (Array.isArray(setlist) ? setlist.map((s) => (s && typeof s === "object" ? s.id : s)) : null);
+    if (!currentSongId || !Array.isArray(ids) || ids.length < 4) {
+      return res.status(400).json({ error: "Need currentSongId and setlist/setlistIds with at least 4 songs" });
     }
-    const currentSong = setlist.find((s) => s.id === currentSongId);
+    const setlistSongs = ids.map((id) => REPERTOIRE_MAP.get(String(id))).filter(Boolean);
+    const currentSong = setlistSongs.find((s) => String(s.id) === String(currentSongId));
     if (!currentSong) {
       return res.status(400).json({ error: "Current song not found in setlist" });
     }
-    const suggestedIds = ruleBasedSuggestions(currentSong, setlist, 3);
+    const suggestedIds = ruleBasedSuggestions(currentSong, setlistSongs, 3);
     return res.json({ suggestedIds });
   } catch (err) {
     console.error("ai-suggestions error:", err.message || err);

@@ -20,6 +20,23 @@ function stripStateForSync(st: BandState): BandState {
   };
 }
 
+/** Build delta payload for minimal upload (~200B vs ~45KB for song change) */
+function buildDeltaPayload(prev: BandState, next: BandState): { currentSong?: Song | null; setlistIds?: string[]; lastUpdate: number } {
+  const delta: { currentSong?: Song | null; setlistIds?: string[]; lastUpdate: number } = {
+    lastUpdate: next.lastUpdate,
+  };
+  const currentId = (s: Song | null) => (s?.id ? String(s.id) : null);
+  if (currentId(next.currentSong) !== currentId(prev.currentSong)) {
+    delta.currentSong = next.currentSong ? stripLyrics(next.currentSong) : null;
+  }
+  const prevIds = (prev.setlist || []).map((s) => String(s.id)).join(",");
+  const nextIds = (next.setlist || []).map((s) => String(s.id)).join(",");
+  if (nextIds !== prevIds) {
+    delta.setlistIds = (next.setlist || []).map((s) => s.id);
+  }
+  return delta;
+}
+
 /** Enrich received state with lyrics from local repertoire */
 function enrichWithLyrics(st: BandState): BandState {
   return {
@@ -29,6 +46,26 @@ function enrichWithLyrics(st: BandState): BandState {
       : null,
     setlist: st.setlist.map((s) => REPERTOIRE_MAP.get(s.id) ?? s),
   };
+}
+
+/** Apply delta to state and enrich with lyrics */
+function applyDelta(prev: BandState, delta: DeltaPayload): BandState {
+  let next: BandState = { ...prev };
+  if (delta.lastUpdate !== undefined && delta.lastUpdate >= prev.lastUpdate) {
+    next.lastUpdate = delta.lastUpdate;
+  }
+  if (delta.currentSong !== undefined) {
+    const full = delta.currentSong
+      ? (REPERTOIRE_MAP.get(delta.currentSong.id) ?? delta.currentSong)
+      : null;
+    next.currentSong = full;
+  }
+  if (delta.setlistIds !== undefined) {
+    next.setlist = delta.setlistIds
+      .map((id) => REPERTOIRE_MAP.get(id))
+      .filter((s): s is Song => !!s);
+  }
+  return next;
 }
 
 const rawWsUrl = import.meta.env.VITE_WS_URL as string | undefined;
@@ -52,7 +89,11 @@ function getWsUrl(): string | undefined {
 
 const WS_URL = typeof window !== "undefined" ? getWsUrl() : rawWsUrl;
 
-type Message = { type: "state"; payload: BandState } | { type: "update"; role: string; payload: BandState };
+type DeltaPayload = { currentSong?: Song | null; setlistIds?: string[]; lastUpdate: number };
+type Message =
+  | { type: "state"; payload: BandState }
+  | { type: "delta"; payload: DeltaPayload }
+  | { type: "update"; role: string; payload: BandState };
 
 interface UseBandWebSocketArgs {
   authRole: "singer" | "member";
@@ -79,12 +120,12 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
   const [isOffline, setIsOffline] = useState(false);
 
   const sendUpdate = useCallback(
-    (payload: BandState) => {
+    (next: BandState, prev?: BandState) => {
       if (authRole !== "singer" || !WS_URL) return;
       const ws = wsRef.current;
-      if (ws?.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "update", role: "singer", payload: stripStateForSync(payload) }));
-      }
+      if (ws?.readyState !== WebSocket.OPEN) return;
+      const payload = prev ? buildDeltaPayload(prev, next) : stripStateForSync(next);
+      ws.send(JSON.stringify({ type: "update", role: "singer", payload }));
     },
     [authRole]
   );
@@ -102,9 +143,9 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
           failCountRef.current = 0;
           setIsOffline(false);
           setIsConnected(true);
-          // Singer: push current state so server has it; new devices get correct state on connect
+          // Singer: push full state on connect (new clients need complete state)
           if (authRole === "singer") {
-            ws.send(JSON.stringify({ type: "update", role: "singer", payload: stripStateForSync(stateRef.current) }));
+            sendUpdate(stateRef.current);
           }
         };
 
@@ -112,13 +153,22 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
           try {
             const msg = JSON.parse(e.data) as Message;
             if (msg.type === "state" && msg.payload) {
-              const remote = msg.payload as BandState;
-              const enriched = enrichWithLyrics(remote);
+              const enriched = enrichWithLyrics(msg.payload as BandState);
               setStateRef.current((prev) => {
                 if (enriched.lastUpdate >= prev.lastUpdate) {
                   setHasUpdateRef.current(true);
                   setTimeout(() => setHasUpdateRef.current(false), 2500);
                   return enriched;
+                }
+                return prev;
+              });
+            } else if (msg.type === "delta" && msg.payload) {
+              const delta = msg.payload as DeltaPayload;
+              setStateRef.current((prev) => {
+                if (delta.lastUpdate >= prev.lastUpdate) {
+                  setHasUpdateRef.current(true);
+                  setTimeout(() => setHasUpdateRef.current(false), 2500);
+                  return applyDelta(prev, delta);
                 }
                 return prev;
               });
@@ -151,7 +201,7 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
       wsRef.current?.close();
       wsRef.current = null;
     };
-  }, [WS_URL, authRole]);
+  }, [WS_URL, authRole, sendUpdate]);
 
   return { sendUpdate, isConnected, isOffline };
 }
