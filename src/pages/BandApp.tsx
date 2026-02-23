@@ -125,7 +125,7 @@ const CurrentSongDisplay = memo(
 
   return (
     <motion.div
-      layout="position"
+      layout={compact ? false : "position"}
       role={isClickable ? "button" : undefined}
       tabIndex={isClickable ? 0 : undefined}
       onClick={isClickable ? onScrollToCurrent : undefined}
@@ -208,24 +208,14 @@ const CurrentSongDisplay = memo(
                     )}
                     <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600 ring-2 ring-emerald-500/20" />
                   </span>
-                  <motion.h1
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-                    style={{ willChange: "transform, opacity" }}
+                  <h1
                     className="font-serif font-black text-gray-950 truncate flex-1 min-w-0 text-[18px] sm:text-[20px] leading-tight tracking-tight drop-shadow-sm"
                     aria-live="polite"
                     aria-atomic="true"
                   >
                     {currentSong.title}
-                  </motion.h1>
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.3, delay: 0.05, ease: [0.32, 0.72, 0, 1] }}
-                    style={{ willChange: "transform, opacity" }}
+                  </h1>
+                  <div
                     className="flex items-center gap-2 shrink-0"
                   >
                     {currentSong.key && (
@@ -238,7 +228,7 @@ const CurrentSongDisplay = memo(
                         {currentSong.bpm}
                       </span>
                     )}
-                  </motion.div>
+                  </div>
                 </>
               ) : (
                 <>
