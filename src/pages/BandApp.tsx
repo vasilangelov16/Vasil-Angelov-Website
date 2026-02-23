@@ -42,6 +42,7 @@ const LAYOUT_TWEEN = { duration: 0.45, ease: [0.32, 0.72, 0, 1] as const }; // b
 const APPLE_TAP = { scale: 0.98 };
 const APPLE_EASE = [0.32, 0.72, 0, 1] as const; // Apple-style ease-out
 const FADE_DURATION = 0.25; // Short, smooth crossfades
+const VIEW_SWITCH_DURATION = 0.35; // Smooth slide + fade
 
 /** Apple-like smooth scroll: ease-out cubic, ~550ms */
 function animateScrollTo(container: HTMLElement, targetTop: number, durationMs = 550) {
@@ -1745,10 +1746,11 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             initial={false}
             animate={{
               opacity: singerViewMode === "setlist" ? 1 : 0,
+              x: singerViewMode === "setlist" ? 0 : -12,
               pointerEvents: singerViewMode === "setlist" ? "auto" : "none",
               zIndex: singerViewMode === "setlist" ? 10 : 0,
             }}
-            transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
+            transition={{ duration: VIEW_SWITCH_DURATION, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="absolute inset-0 flex flex-col"
           >
             <div className="flex-shrink-0 px-2 py-1.5 bg-gray-50 space-y-2">
@@ -1773,10 +1775,11 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             initial={false}
             animate={{
               opacity: singerViewMode === "lyrics" ? 1 : 0,
+              x: singerViewMode === "lyrics" ? 0 : 12,
               pointerEvents: singerViewMode === "lyrics" ? "auto" : "none",
               zIndex: singerViewMode === "lyrics" ? 10 : 0,
             }}
-            transition={{ duration: FADE_DURATION, ease: APPLE_EASE }}
+            transition={{ duration: VIEW_SWITCH_DURATION, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="absolute inset-0 flex flex-col"
           >
             <SingerLyricsView song={state.currentSong} />
