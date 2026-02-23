@@ -140,10 +140,20 @@ const CurrentSongDisplay = memo(
           : undefined
       }
       whileTap={isClickable ? APPLE_TAP : undefined}
-      transition={{ layout: { duration: 0.4, ease: [0.32, 0.72, 0, 1] } }}
+      transition={{ 
+        layout: { 
+          duration: 0.5, 
+          ease: [0.25, 0.1, 0.25, 1],
+          type: "tween"
+        } 
+      }}
       title={isClickable ? "Tap to scroll to song in list" : undefined}
+      style={{
+        transform: "translateZ(0)",
+        backfaceVisibility: "hidden" as const
+      }}
       className={cn(
-        "relative w-full overflow-hidden will-change-transform",
+        "relative w-full overflow-hidden",
         compact && "bg-white/90 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
         !compact && "bg-white flex-1 min-h-0 flex flex-col items-center justify-center",
         isClickable && "cursor-pointer touch-manipulation active:bg-gray-50/80"
@@ -1494,8 +1504,16 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             borderRadius: isFullscreen ? 0 : 16,
             padding: isFullscreen ? 0 : isSinger ? "3px" : "3px",
           }}
-          transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
-          style={{ willChange: "transform, opacity" }}
+          transition={{ 
+            duration: 0.5, 
+            ease: [0.25, 0.1, 0.25, 1],
+            type: "tween"
+          }}
+          style={{ 
+            willChange: "transform, opacity",
+            transform: "translateZ(0)",
+            backfaceVisibility: "hidden" as const
+          }}
           className={cn(
             "bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-[0_4px_24px_rgba(245,158,11,0.25)]",
             isSinger ? "flex-shrink-0" : "flex-1 min-h-0 flex flex-col",
@@ -1506,8 +1524,16 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             animate={{
               borderRadius: isFullscreen ? 0 : 13,
             }}
-            transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
-            style={{ willChange: "transform" }}
+            transition={{ 
+              duration: 0.5, 
+              ease: [0.25, 0.1, 0.25, 1],
+              type: "tween"
+            }}
+            style={{ 
+              willChange: "transform",
+              transform: "translateZ(0)",
+              backfaceVisibility: "hidden" as const
+            }}
             className={cn(
               "overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col shadow-inner",
               isSinger ? "min-h-0" : "flex-1 min-h-0"
@@ -1518,8 +1544,16 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
               borderRadius: isFullscreen ? 0 : 12,
               margin: isFullscreen ? 0 : 4,
             }}
-            transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
-            style={{ willChange: "transform" }}
+            transition={{ 
+              duration: 0.5, 
+              ease: [0.25, 0.1, 0.25, 1],
+              type: "tween"
+            }}
+            style={{ 
+              willChange: "transform",
+              transform: "translateZ(0)",
+              backfaceVisibility: "hidden" as const
+            }}
             className={cn(
               "overflow-hidden bg-white flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
               isSinger ? "min-h-0" : "flex-1 min-h-0"
