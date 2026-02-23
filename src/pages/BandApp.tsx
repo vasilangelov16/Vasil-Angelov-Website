@@ -1475,6 +1475,20 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
   const handleSingerViewToggle = useCallback(() => {
     setSingerViewMode((prev) => (prev === "setlist" ? "lyrics" : "setlist"));
   }, []);
+  const handleScrollToCurrentFromNowPlaying = useCallback(() => {
+    if (authRole !== "singer") return;
+    if (singerViewMode !== "setlist") {
+      setSingerViewMode("setlist");
+      // Wait for view switch frame before performing list scroll.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          scrollToCurrentSongRef.current?.();
+        });
+      });
+      return;
+    }
+    scrollToCurrentSongRef.current?.();
+  }, [authRole, singerViewMode]);
   const handleSearchChange = useCallback((v: string) => setSearchQuery(v), []);
   const handleSearchClear = useCallback(() => setSearchQuery(""), []);
   const handleCategoryChange = useCallback((v: RepertoireCategory) => setCategoryFilter(v), []);
@@ -1714,8 +1728,8 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
               compact={isSinger}
               stageMode={authRole === "member"}
               onScrollToCurrent={
-                authRole === "singer" && singerViewMode === "setlist"
-                  ? () => scrollToCurrentSongRef.current?.()
+                authRole === "singer"
+                  ? handleScrollToCurrentFromNowPlaying
                   : undefined
               }
             />
