@@ -37,15 +37,32 @@ const server = createServer(app);
 
 const wss = new WebSocketServer({ server, path: "/ws" });
 
+/** Strip lyrics from songs to reduce WebSocket payload (~80% smaller) */
+function stripLyricsForSync(s) {
+  if (!s || typeof s !== "object") return s;
+  const { lyrics, ...rest } = s;
+  return rest;
+}
+
+function stripStateForSync(st) {
+  if (!st) return st;
+  return {
+    ...st,
+    currentSong: st.currentSong ? stripLyricsForSync(st.currentSong) : null,
+    setlist: Array.isArray(st.setlist) ? st.setlist.map(stripLyricsForSync) : st.setlist,
+  };
+}
+
 function broadcast(data) {
-  const msg = JSON.stringify(data);
+  const stripped = { ...data, payload: data.payload ? stripStateForSync(data.payload) : data.payload };
+  const msg = JSON.stringify(stripped);
   wss.clients.forEach((client) => {
     if (client.readyState === 1) client.send(msg);
   });
 }
 
 wss.on("connection", (ws) => {
-  ws.send(JSON.stringify({ type: "state", payload: state }));
+  ws.send(JSON.stringify({ type: "state", payload: stripStateForSync(state) }));
 
   ws.on("message", (raw) => {
     try {

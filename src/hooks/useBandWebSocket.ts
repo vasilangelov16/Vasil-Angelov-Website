@@ -1,5 +1,35 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import type { BandState } from "@/context/BandContext";
+import type { BandState, Song } from "@/context/BandContext";
+import REPERTOIRE_SONGS from "@band-songs";
+
+const REPERTOIRE = REPERTOIRE_SONGS as Song[];
+const REPERTOIRE_MAP = new Map(REPERTOIRE.map((s) => [s.id, s]));
+
+/** Strip lyrics to reduce payload (~80% smaller) */
+function stripLyrics(s: Song): Song {
+  if (!s) return s;
+  const { lyrics: _l, ...rest } = s;
+  return rest as Song;
+}
+
+function stripStateForSync(st: BandState): BandState {
+  return {
+    ...st,
+    currentSong: st.currentSong ? stripLyrics(st.currentSong) : st.currentSong,
+    setlist: st.setlist.map(stripLyrics),
+  };
+}
+
+/** Enrich received state with lyrics from local repertoire */
+function enrichWithLyrics(st: BandState): BandState {
+  return {
+    ...st,
+    currentSong: st.currentSong
+      ? (REPERTOIRE_MAP.get(st.currentSong.id) ?? st.currentSong)
+      : null,
+    setlist: st.setlist.map((s) => REPERTOIRE_MAP.get(s.id) ?? s),
+  };
+}
 
 const rawWsUrl = import.meta.env.VITE_WS_URL as string | undefined;
 
@@ -53,7 +83,7 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
       if (authRole !== "singer" || !WS_URL) return;
       const ws = wsRef.current;
       if (ws?.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "update", role: "singer", payload }));
+        ws.send(JSON.stringify({ type: "update", role: "singer", payload: stripStateForSync(payload) }));
       }
     },
     [authRole]
@@ -74,8 +104,7 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
           setIsConnected(true);
           // Singer: push current state so server has it; new devices get correct state on connect
           if (authRole === "singer") {
-            const payload = stateRef.current;
-            ws.send(JSON.stringify({ type: "update", role: "singer", payload }));
+            ws.send(JSON.stringify({ type: "update", role: "singer", payload: stripStateForSync(stateRef.current) }));
           }
         };
 
@@ -84,11 +113,12 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
             const msg = JSON.parse(e.data) as Message;
             if (msg.type === "state" && msg.payload) {
               const remote = msg.payload as BandState;
+              const enriched = enrichWithLyrics(remote);
               setStateRef.current((prev) => {
-                if (remote.lastUpdate >= prev.lastUpdate) {
+                if (enriched.lastUpdate >= prev.lastUpdate) {
                   setHasUpdateRef.current(true);
                   setTimeout(() => setHasUpdateRef.current(false), 2500);
-                  return remote;
+                  return enriched;
                 }
                 return prev;
               });
