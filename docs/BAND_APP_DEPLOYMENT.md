@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Band Setlist app lives at **band.vasilangelov.com** and is part of this monorepo. It uses PIN-based access control (Singer/Member) and supports real-time sync via WebSocket.
+InSync lives at **band.vasilangelov.com** and is part of this monorepo. It uses PIN-based access control (Singer/Member) and supports real-time sync via WebSocket.
 
 ---
 

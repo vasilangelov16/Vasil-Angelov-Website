@@ -1,6 +1,6 @@
 # Band App – Production Checklist
 
-Use this checklist before deploying the Band Setlist app to band.vasilangelov.com.
+Use this checklist before deploying InSync to band.vasilangelov.com.
 
 ---
 

@@ -1,6 +1,6 @@
 # Band App – Feature Suggestions
 
-Ideas to make the Band Setlist app even better, organized by impact and effort.
+Ideas to make InSync even better, organized by impact and effort.
 
 ---
 

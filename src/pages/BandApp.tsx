@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { BandAppTutorial } from "@/components/BandAppTutorial";
 import {
   PAGE_SIZE,
   SETLIST_SCROLL_STORAGE_KEY,
@@ -1085,6 +1086,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<RepertoireCategory>(readStoredCategory);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [singerViewMode, setSingerViewMode] = useState<SingerViewMode>("setlist");
   const [metronomeEnabled, setMetronomeEnabled] = useState(() => {
     try {
@@ -1156,37 +1158,37 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
   return (
     <div className="band-app-font h-[100dvh] min-h-[100dvh] bg-[#f5f5f7] flex flex-col overflow-hidden">
       <header className="flex-shrink-0 px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)] transition-colors duration-200">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <Music className="w-4 h-4 text-primary shrink-0" aria-hidden />
-          <span className="text-gray-900 font-semibold text-sm truncate">Setlist</span>
-          {hasWebSocket() && (
+        <div className="flex items-center gap-2 min-w-0 flex-1 justify-start">
+          <motion.button
+            type="button"
+            onClick={() => setShowTutorial(true)}
+            whileTap={APPLE_TAP}
+            transition={APPLE_SPRING}
+            className="flex items-center gap-2 min-w-0 text-left touch-manipulation group shrink-0"
+            aria-label="How to use the app"
+            title="How to use"
+          >
             <span
               className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium shrink-0 tracking-wide",
-                isConnected
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
-                  : isOffline
-                    ? "bg-gray-50 text-gray-600 border border-gray-200/80"
-                    : "bg-amber-50 text-amber-700 border border-amber-200/60"
+                "relative inline-flex",
+                hasWebSocket() && "insync-status-dot",
+                hasWebSocket() &&
+                  (isConnected ? "insync-status--connected" : isOffline ? "insync-status--offline" : "insync-status--connecting")
               )}
               title={
-                isConnected
-                  ? "Connected to server"
-                  : isOffline
-                    ? "Server unreachable. App works offline with local data."
-                    : "Connecting to server…"
+                hasWebSocket()
+                  ? isConnected
+                    ? "Connected to server"
+                    : isOffline
+                      ? "Server unreachable. App works offline with local data."
+                      : "Connecting to server…"
+                  : undefined
               }
-              aria-live="polite"
+              aria-live={hasWebSocket() ? "polite" : undefined}
             >
-              <span
-                className={cn(
-                  "w-1.5 h-1.5 rounded-full shrink-0",
-                  isConnected ? "bg-emerald-500" : isOffline ? "bg-gray-400" : "bg-amber-500 animate-pulse"
-                )}
-              />
-              <span className="hidden sm:inline">{isConnected ? "Live" : isOffline ? "Offline" : "Connecting"}</span>
+              <Music className="w-4 h-4 text-primary shrink-0 group-hover:opacity-80 transition-opacity" aria-hidden />
             </span>
-          )}
+          </motion.button>
           <AnimatePresence>
             {hasUpdate && (
               <motion.span
@@ -1202,7 +1204,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             )}
           </AnimatePresence>
         </div>
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 flex-1 justify-end min-w-0">
           {authRole === "singer" && (
             <motion.button
               type="button"
@@ -1338,6 +1340,12 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
           </motion.div>
         )}
       </AnimatePresence>
+
+      <BandAppTutorial
+        open={showTutorial}
+        onOpenChange={setShowTutorial}
+        authRole={authRole}
+      />
 
       {!(authRole === "singer" && singerViewMode === "lyrics") && (
         <div

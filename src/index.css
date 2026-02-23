@@ -360,6 +360,7 @@ html {
 .lyrics-scroll {
   contain: layout;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 .lyrics-scroll::-webkit-scrollbar {
   width: 6px;
@@ -378,4 +379,41 @@ html {
 /* Band App - Apple-like system font stack */
 .band-app-font {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+/* Band App - Tutorial modal header typography */
+.tutorial-modal-header .tutorial-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Band App - InSync status dot on the "c" */
+.insync-status-dot {
+  position: relative;
+}
+.insync-status-dot::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  border: 1.5px solid white;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+.insync-status-dot.insync-status--connected::before {
+  background-color: #10b981;
+}
+.insync-status-dot.insync-status--offline::before {
+  background-color: #9ca3af;
+}
+.insync-status-dot.insync-status--connecting::before {
+  background-color: #f59e0b;
+  animation: insync-pulse 1.2s ease-in-out infinite;
+}
+@keyframes insync-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }

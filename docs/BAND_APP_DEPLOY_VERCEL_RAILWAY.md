@@ -1,6 +1,6 @@
 # Band App – Deploy to band.vasilangelov.com (Vercel + Railway)
 
-Step-by-step guide to deploy the Band Setlist app using **Vercel** (frontend) and **Railway** (WebSocket backend).
+Step-by-step guide to deploy InSync using **Vercel** (frontend) and **Railway** (WebSocket backend).
 
 ---
 

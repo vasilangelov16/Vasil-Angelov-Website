@@ -309,7 +309,7 @@ export const PinGate = ({ onAuth }: PinGateProps) => {
 
       {/* Full-screen content */}
       <div className="relative z-10 flex flex-col items-center justify-between h-full w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20">
-        {/* Top: Vasil Angelov + Band Setlist */}
+        {/* Top: Vasil Angelov + InSync */}
         <div className="flex flex-col items-center justify-center flex-1 w-full max-w-5xl">
           <div className="flex flex-col items-center gap-0 sm:gap-1 mb-4 sm:mb-6">
             <div className="overflow-hidden">
@@ -347,7 +347,7 @@ export const PinGate = ({ onAuth }: PinGateProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            Band Setlist
+            InSync
           </motion.h2>
         </div>
 
