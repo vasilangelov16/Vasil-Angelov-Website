@@ -251,16 +251,20 @@ const CurrentSongDisplay = memo(
                     }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-                    style={{ willChange: "transform, opacity" }}
-                    className={cn("inline-flex items-center gap-1.5 transition-all duration-450", labelClass)}
+                    style={{ 
+                      willChange: "transform, opacity",
+                      transform: "translateZ(0)",
+                      backfaceVisibility: "hidden" as const
+                    }}
+                    className={cn("inline-flex items-center gap-1.5 transition-all duration-500", labelClass)}
                   >
-                    <span className={cn("relative flex transition-all duration-450", dotClass)}>
+                    <span className={cn("relative flex transition-all duration-500", dotClass)}>
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
                       <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600" />
                     </span>
                     <span
                       className={cn(
-                        "text-emerald-700 font-bold uppercase tracking-[0.15em] transition-all duration-450",
+                        "text-emerald-700 font-bold uppercase tracking-[0.15em] transition-all duration-500",
                         labelTextClass
                       )}
                     >
@@ -273,9 +277,13 @@ const CurrentSongDisplay = memo(
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.4, delay: 0.05, ease: [0.32, 0.72, 0, 1] }}
-                    style={{ willChange: "transform, opacity" }}
+                    style={{ 
+                      willChange: "transform, opacity",
+                      transform: "translateZ(0)",
+                      backfaceVisibility: "hidden" as const
+                    }}
                     className={cn(
-                      "font-serif font-black text-gray-950 leading-[1.1] tracking-tight transition-all duration-450 ease-out",
+                      "font-serif font-black text-gray-950 leading-[1.1] tracking-tight transition-all duration-500 ease-out",
                       titleClass
                     )}
                     aria-live="polite"
@@ -290,8 +298,12 @@ const CurrentSongDisplay = memo(
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.35, delay: 0.1, ease: [0.32, 0.72, 0, 1] }}
-                      style={{ willChange: "transform, opacity" }}
-                      className={cn("text-gray-500 transition-all duration-450 ease-out", artistClass)}
+                      style={{ 
+                        willChange: "transform, opacity",
+                        transform: "translateZ(0)",
+                        backfaceVisibility: "hidden" as const
+                      }}
+                      className={cn("text-gray-500 transition-all duration-500 ease-out", artistClass)}
                     >
                       {currentSong.artist}
                     </motion.p>
@@ -302,38 +314,66 @@ const CurrentSongDisplay = memo(
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.35, delay: 0.15, ease: [0.32, 0.72, 0, 1] }}
-                    style={{ willChange: "transform, opacity" }}
-                    className={cn("flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap transition-all duration-450 ease-out", badgesClass)}
+                    style={{ 
+                      willChange: "transform, opacity",
+                      transform: "translateZ(0)",
+                      backfaceVisibility: "hidden" as const
+                    }}
+                    className={cn("flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap transition-all duration-500 ease-out", badgesClass)}
                   >
                     {currentSong.key && (
-                      <span
+                      <motion.span
+                        layout
+                        transition={{
+                          layout: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1], type: "tween" }
+                        }}
+                        style={{
+                          transform: "translateZ(0)",
+                          backfaceVisibility: "hidden" as const
+                        }}
                         className={cn(
-                          "rounded-full bg-gray-900 text-white font-bold transition-all duration-450 ease-out",
+                          "rounded-full bg-gray-900 text-white font-bold transition-all duration-500 ease-out",
                           badgeClass
                         )}
                       >
                         {currentSong.key}
-                      </span>
+                      </motion.span>
                     )}
                     {currentSong.bpm && (
-                      <span
+                      <motion.span
+                        layout
+                        transition={{
+                          layout: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1], type: "tween" }
+                        }}
+                        style={{
+                          transform: "translateZ(0)",
+                          backfaceVisibility: "hidden" as const
+                        }}
                         className={cn(
-                          "rounded-full bg-gray-100 text-gray-600 font-semibold transition-all duration-450 ease-out",
+                          "rounded-full bg-gray-100 text-gray-600 font-semibold transition-all duration-500 ease-out",
                           badgeClassMuted
                         )}
                       >
                         {currentSong.bpm} BPM
-                      </span>
+                      </motion.span>
                     )}
                     {currentSong.tempo && (
-                      <span
+                      <motion.span
+                        layout
+                        transition={{
+                          layout: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1], type: "tween" }
+                        }}
+                        style={{
+                          transform: "translateZ(0)",
+                          backfaceVisibility: "hidden" as const
+                        }}
                         className={cn(
-                          "rounded-full bg-amber-400 text-amber-950 font-bold transition-all duration-450 ease-out",
+                          "rounded-full bg-amber-400 text-amber-950 font-bold transition-all duration-500 ease-out",
                           badgeClassMuted
                         )}
                       >
                         {currentSong.tempo}
-                      </span>
+                      </motion.span>
                     )}
                   </motion.div>
                 </>
