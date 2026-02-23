@@ -16,6 +16,7 @@ import {
   Users,
   ChevronRight,
   X,
+  Maximize,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { APPLE_SPRING, APPLE_TAP } from "@/band/constants";
@@ -130,6 +131,11 @@ export const BandAppTutorial = memo(
                     icon={Music}
                     title="Now Playing"
                     description="The large display shows the current song, artist, key, and BPM. The singer controls this from their device—it syncs to all members in real time."
+                  />
+                  <TutorialStep
+                    icon={Maximize}
+                    title="Performance mode"
+                    description="Double-tap anywhere on the Now Playing display to toggle fullscreen mode. This hides the header for maximum stage visibility. Double-tap again to exit."
                   />
                   <TutorialStep
                     icon={Timer}

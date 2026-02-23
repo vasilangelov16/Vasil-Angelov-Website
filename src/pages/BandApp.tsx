@@ -1068,6 +1068,7 @@ type SingerViewMode = "setlist" | "lyrics";
 const METRONOME_STORAGE_KEY = "band-app-metronome";
 const METRONOME_VISIBLE_STORAGE_KEY = "band-app-metronome-visible";
 const CATEGORY_FILTER_STORAGE_KEY = "band-app-category-filter";
+const FULLSCREEN_MODE_STORAGE_KEY = "band-app-fullscreen-mode";
 
 const VALID_CATEGORIES: RepertoireCategory[] = ["all", "stranski", "ex-yu", "makedonski", "turbo", "extras"];
 
@@ -1103,7 +1104,17 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
       return true;
     }
   });
+  const [isFullscreen, setIsFullscreen] = useState(() => {
+    if (authRole !== "member") return false;
+    try {
+      return localStorage.getItem(FULLSCREEN_MODE_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
   const scrollToCurrentSongRef = useRef<(() => void) | null>(null);
+  const lastTapRef = useRef<number>(0);
+  const doubleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     try {
@@ -1128,6 +1139,21 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
       /* ignore */
     }
   }, [categoryFilter]);
+
+  useEffect(() => {
+    if (authRole !== "member") return;
+    try {
+      localStorage.setItem(FULLSCREEN_MODE_STORAGE_KEY, String(isFullscreen));
+    } catch {
+      /* ignore */
+    }
+  }, [isFullscreen, authRole]);
+
+  useEffect(() => {
+    return () => {
+      if (doubleTapTimeoutRef.current) clearTimeout(doubleTapTimeoutRef.current);
+    };
+  }, []);
 
   const handleSingerViewToggle = useCallback(() => {
     setSingerViewMode((prev) => (prev === "setlist" ? "lyrics" : "setlist"));
@@ -1155,9 +1181,37 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
     onLogout();
   }, [onLogout]);
 
+  const handleDoubleTap = useCallback(() => {
+    if (authRole !== "member") return;
+    const now = Date.now();
+    const timeSinceLastTap = now - lastTapRef.current;
+    
+    if (timeSinceLastTap < 300) {
+      // Double tap detected
+      if (doubleTapTimeoutRef.current) clearTimeout(doubleTapTimeoutRef.current);
+      setIsFullscreen((prev) => !prev);
+      lastTapRef.current = 0;
+    } else {
+      // First tap
+      lastTapRef.current = now;
+      if (doubleTapTimeoutRef.current) clearTimeout(doubleTapTimeoutRef.current);
+      doubleTapTimeoutRef.current = setTimeout(() => {
+        lastTapRef.current = 0;
+      }, 300);
+    }
+  }, [authRole]);
+
   return (
     <div className="band-app-font h-[100dvh] min-h-[100dvh] bg-[#f5f5f7] flex flex-col overflow-hidden">
-      <header className="flex-shrink-0 px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)] transition-colors duration-200">
+      <AnimatePresence>
+        {(!isFullscreen || authRole !== "member") && (
+          <motion.header
+            key="header"
+            initial={false}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            transition={{ duration: 0.3, ease: APPLE_EASE }}
+            className="flex-shrink-0 px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)] transition-colors duration-200">
         <div className="flex items-center gap-2 min-w-0 flex-1 justify-start">
           <motion.button
             type="button"
@@ -1294,7 +1348,9 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             <LogOut className="w-4 h-4" />
           </motion.button>
         </div>
-      </header>
+          </motion.header>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showLogoutDialog && (
@@ -1349,20 +1405,24 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
 
       {!(authRole === "singer" && singerViewMode === "lyrics") && (
         <div
+          onClick={authRole === "member" ? handleDoubleTap : undefined}
           className={cn(
             "rounded-2xl p-[3px] sm:p-[4px] bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-[0_4px_24px_rgba(245,158,11,0.25)]",
-            isSinger ? "mx-1.5 my-1 flex-shrink-0" : "mx-2 sm:mx-3 my-2 sm:my-3 flex-1 min-h-0 flex flex-col"
+            isSinger ? "mx-1.5 my-1 flex-shrink-0" : isFullscreen ? "m-0 flex-1 min-h-0 flex flex-col rounded-none" : "mx-2 sm:mx-3 my-2 sm:my-3 flex-1 min-h-0 flex flex-col",
+            authRole === "member" && "touch-manipulation"
           )}
         >
           <div
             className={cn(
-              "rounded-[13px] sm:rounded-[14px] overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col shadow-inner",
+              "overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col shadow-inner",
+              isFullscreen ? "rounded-none" : "rounded-[13px] sm:rounded-[14px]",
               isSinger ? "min-h-0" : "flex-1 min-h-0"
             )}
           >
           <div
             className={cn(
-              "rounded-xl overflow-hidden bg-white flex flex-col m-0.5 sm:m-1 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+              "overflow-hidden bg-white flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+              isFullscreen ? "rounded-none m-0" : "rounded-xl m-0.5 sm:m-1",
               isSinger ? "min-h-0" : "flex-1 min-h-0"
             )}
           >
