@@ -888,12 +888,16 @@ const SongItem = memo(
     isRecentlySuggested?: boolean;
     isSingerView?: boolean;
   }) => {
-    const handleClick = useCallback(() => {
-      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-        navigator.vibrate(10);
-      }
-      onSelect(song);
-    }, [song, onSelect]);
+    const handleClick = useCallback(
+      (e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).closest("[data-ai-suggest]")) return;
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          navigator.vibrate(10);
+        }
+        onSelect(song);
+      },
+      [song, onSelect]
+    );
     const handleDoubleClick = useCallback(
       (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -915,6 +919,7 @@ const SongItem = memo(
     );
     const handleAIClick = useCallback(
       (e: React.MouseEvent) => {
+        e.preventDefault();
         e.stopPropagation();
         onAISuggest?.(song);
       },
@@ -992,6 +997,7 @@ const SongItem = memo(
           {isActive && onAISuggest && (
             <motion.button
               type="button"
+              data-ai-suggest
               onClick={handleAIClick}
               disabled={isAILoading}
               whileTap={!isAILoading ? APPLE_TAP : undefined}

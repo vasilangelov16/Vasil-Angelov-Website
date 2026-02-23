@@ -37,6 +37,19 @@ const REPERTOIRE = REPERTOIRE_SONGS as Song[];
 
 const STORAGE_KEY = "band-app-state";
 const CURRENT_SONG_ID_KEY = "band-app-current-song-id";
+const idEq = (a?: { id: string } | null, b?: { id: string } | null) =>
+  String(a?.id) === String(b?.id);
+
+function restoreCurrentSongFromStorage(setlist: Song[], currentSong: Song | null): Song | null {
+  if (currentSong) return currentSong;
+  try {
+    const savedId = localStorage.getItem(CURRENT_SONG_ID_KEY);
+    if (!savedId) return null;
+    return setlist.find((s) => String(s.id) === String(savedId)) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /** Deduplicate setlist by title+artist (keep first occurrence). Used for all state sources. */
 function deduplicateSetlist(state: BandState): BandState {
@@ -47,13 +60,22 @@ function deduplicateSetlist(state: BandState): BandState {
     keyToFirstId.set(key, s.id);
     return true;
   });
-  if (setlist.length === state.setlist.length) return state;
+
+  // Always enforce currentSong invariant, even when no dedup happened.
+  if (setlist.length === state.setlist.length) {
+    const restored = restoreCurrentSongFromStorage(setlist, state.currentSong);
+    if (restored && !idEq(restored, state.currentSong)) {
+      return { ...state, currentSong: restored };
+    }
+    return state;
+  }
   let currentSong = state.currentSong;
-  if (currentSong && !setlist.some((s) => s.id === currentSong!.id)) {
+  if (currentSong && !setlist.some((s) => idEq(s, currentSong))) {
     const key = `${(currentSong.title || "").toLowerCase()}|${(currentSong.artist || "").toLowerCase()}`;
     const firstId = keyToFirstId.get(key);
-    currentSong = firstId ? setlist.find((s) => s.id === firstId) ?? null : null;
+    currentSong = firstId ? setlist.find((s) => String(s.id) === String(firstId)) ?? null : null;
   }
+  currentSong = restoreCurrentSongFromStorage(setlist, currentSong);
   return { ...state, setlist, currentSong: currentSong ?? state.currentSong };
 }
 
@@ -235,6 +257,24 @@ export const BandProvider = memo(function BandProvider({ children, authRole }: B
     return () => clearInterval(interval);
   }, [state.lastUpdate]);
 
+  // Safety net: if currentSong is dropped by an external sync race, restore it from persisted selection.
+  useEffect(() => {
+    if (state.currentSong) return;
+    try {
+      const savedId = localStorage.getItem(CURRENT_SONG_ID_KEY);
+      if (!savedId) return;
+      const found = state.setlist.find((s) => String(s.id) === String(savedId));
+      if (found) {
+        const now = Date.now();
+        setState((prev) => ({ ...prev, currentSong: found, lastUpdate: now }));
+      } else {
+        localStorage.removeItem(CURRENT_SONG_ID_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [state.currentSong, state.setlist, setState]);
+
   const setCurrentSong = useCallback(
     (song: Song | null) => {
       if (authRole !== "singer") return;
@@ -321,8 +361,8 @@ export const BandProvider = memo(function BandProvider({ children, authRole }: B
         const after = setlist.slice(currentIndex + 1).filter((s) => !suggestedSet.has(String(s.id)));
 
         const newSetlist = [...before, effectiveCurrent, ...suggestedSongs, ...after];
-        const next = { ...prev, setlist: newSetlist, lastUpdate: now         };
-        sendUpdate(next, prev);
+        const next = { ...prev, setlist: newSetlist, currentSong: effectiveCurrent, lastUpdate: now };
+        sendUpdate(next);
         return next;
       });
     },

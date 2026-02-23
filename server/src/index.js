@@ -277,7 +277,7 @@ function styleCompatibilityScore(currentArtist, candidateArtist) {
   return 0;
 }
 
-const BALKAN_GENRES = ["EX-YU", "Makedonski"];
+const BALKAN_GENRES = ["EX-YU", "Makedonski", "Turbo"];
 
 function isBalkan(song) {
   const g = song?.genre;
@@ -296,6 +296,7 @@ function languageRegionScore(currentSong, candidate) {
 function ruleBasedSuggestions(currentSong, setlist, count = 3) {
   const currentId = currentSong?.id;
   if (!currentId) return [];
+  const orderIndex = new Map(setlist.map((s, i) => [String(s.id), i]));
   const currentIndex = setlist.findIndex((s) => s.id === currentId);
   if (currentIndex < 0) return [];
   // Exclude the song immediately before current (avoid suggesting "go back" to previous song)
@@ -303,6 +304,10 @@ function ruleBasedSuggestions(currentSong, setlist, count = 3) {
   let candidates = setlist.filter(
     (s) => s.id !== currentId && (!prevSongId || s.id !== prevSongId)
   );
+  // Hard strict grouping:
+  // English songs suggest only English songs; Balkan songs suggest only Balkan songs.
+  const currentIsBalkan = isBalkan(currentSong);
+  candidates = candidates.filter((s) => isBalkan(s) === currentIsBalkan);
   if (candidates.length === 0) return [];
 
   const result = [];
@@ -323,10 +328,10 @@ function ruleBasedSuggestions(currentSong, setlist, count = 3) {
       score += energyFlowScore(context, song, i);              // Energy flow
       score += styleCompatibilityScore(context?.artist, song.artist);  // Genre/style
 
-      return { song, score };
+      return { song, score, order: orderIndex.get(String(song.id)) ?? Number.MAX_SAFE_INTEGER };
     });
 
-    scored.sort((a, b) => b.score - a.score);
+    scored.sort((a, b) => (b.score - a.score) || (a.order - b.order));
     const best = scored[0]?.song;
     if (!best) break;
 

@@ -62,8 +62,12 @@ function applyDelta(prev: BandState, delta: DeltaPayload): BandState {
   }
   if (delta.setlistIds !== undefined) {
     next.setlist = delta.setlistIds
-      .map((id) => REPERTOIRE_MAP.get(id))
+      .map((id) => REPERTOIRE_MAP.get(String(id)) ?? prev.setlist.find((s) => String(s.id) === String(id)))
       .filter((s): s is Song => !!s);
+    if (delta.currentSong === undefined && prev.currentSong) {
+      const found = next.setlist.find((s) => String(s.id) === String(prev.currentSong!.id));
+      if (found) next.currentSong = found;
+    }
   }
   return next;
 }
@@ -170,7 +174,12 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
                 if (delta.lastUpdate >= prev.lastUpdate) {
                   setHasUpdateRef.current(true);
                   setTimeout(() => setHasUpdateRef.current(false), 2500);
-                  return applyDelta(prev, delta);
+                  const next = applyDelta(prev, delta);
+                  if (authRole === "singer" && !next.currentSong && prev.currentSong && delta.setlistIds?.some((id) => String(id) === String(prev.currentSong!.id))) {
+                    const found = next.setlist.find((s) => String(s.id) === String(prev.currentSong!.id));
+                    return found ? { ...next, currentSong: found } : next;
+                  }
+                  return next;
                 }
                 return prev;
               });
