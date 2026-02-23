@@ -24,7 +24,7 @@ let state = {
 };
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "1mb" })); // Setlist with lyrics can exceed default 100kb
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN);
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
