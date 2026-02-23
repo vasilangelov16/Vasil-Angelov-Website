@@ -234,7 +234,11 @@ const CurrentSongDisplay = memo(
                 <>
                   <motion.div
                     initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    animate={{ 
+                      opacity: 1, 
+                      y: 0,
+                      scale: 1
+                    }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
                     style={{ willChange: "transform, opacity" }}
@@ -255,13 +259,14 @@ const CurrentSongDisplay = memo(
                   </motion.div>
 
                   <motion.h1
+                    key={`title-${isFullscreen}`}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -12 }}
-                    transition={{ duration: 0.35, delay: 0.05, ease: [0.32, 0.72, 0, 1] }}
+                    transition={{ duration: 0.4, delay: 0.05, ease: [0.32, 0.72, 0, 1] }}
                     style={{ willChange: "transform, opacity" }}
                     className={cn(
-                      "font-serif font-black text-gray-950 leading-[1.1] tracking-tight",
+                      "font-serif font-black text-gray-950 leading-[1.1] tracking-tight transition-all duration-450",
                       titleClass
                     )}
                     aria-live="polite"
@@ -272,29 +277,31 @@ const CurrentSongDisplay = memo(
 
                   {currentSong.artist && (
                     <motion.p
+                      key={`artist-${isFullscreen}`}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.3, delay: 0.1, ease: [0.32, 0.72, 0, 1] }}
+                      transition={{ duration: 0.35, delay: 0.1, ease: [0.32, 0.72, 0, 1] }}
                       style={{ willChange: "transform, opacity" }}
-                      className={cn("text-gray-500", artistClass)}
+                      className={cn("text-gray-500 transition-all duration-450", artistClass)}
                     >
                       {currentSong.artist}
                     </motion.p>
                   )}
 
                   <motion.div
+                    key={`badges-${isFullscreen}`}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.3, delay: 0.15, ease: [0.32, 0.72, 0, 1] }}
+                    transition={{ duration: 0.35, delay: 0.15, ease: [0.32, 0.72, 0, 1] }}
                     style={{ willChange: "transform, opacity" }}
-                    className={cn("flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap", badgesClass)}
+                    className={cn("flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap transition-all duration-450", badgesClass)}
                   >
                     {currentSong.key && (
                       <span
                         className={cn(
-                          "rounded-full bg-gray-900 text-white font-bold",
+                          "rounded-full bg-gray-900 text-white font-bold transition-all duration-450",
                           badgeClass
                         )}
                       >
@@ -304,7 +311,7 @@ const CurrentSongDisplay = memo(
                     {currentSong.bpm && (
                       <span
                         className={cn(
-                          "rounded-full bg-gray-100 text-gray-600 font-semibold",
+                          "rounded-full bg-gray-100 text-gray-600 font-semibold transition-all duration-450",
                           badgeClassMuted
                         )}
                       >
@@ -314,7 +321,7 @@ const CurrentSongDisplay = memo(
                     {currentSong.tempo && (
                       <span
                         className={cn(
-                          "rounded-full bg-amber-400 text-amber-950 font-bold",
+                          "rounded-full bg-amber-400 text-amber-950 font-bold transition-all duration-450",
                           badgeClassMuted
                         )}
                       >
@@ -1259,6 +1266,11 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
 
   return (
     <div className="band-app-font h-[100dvh] min-h-[100dvh] bg-[#f5f5f7] flex flex-col overflow-hidden relative">
+      {/* Spacer for absolute navbar in member view when NOT fullscreen */}
+      {authRole === "member" && !isFullscreen && (
+        <div className="h-[44px] sm:h-[52px] flex-shrink-0" aria-hidden="true" />
+      )}
+      
       <AnimatePresence>
         {(!isFullscreen || authRole !== "member") && (
           <motion.header
@@ -1284,7 +1296,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             style={{ willChange: "transform, opacity" }}
             className={cn(
               "px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)]",
-              authRole === "member" && "absolute top-0 left-0 right-0 z-50"
+              authRole === "member" ? "absolute top-0 left-0 right-0 z-50" : "flex-shrink-0"
             )}>
         <div className="flex items-center gap-2 min-w-0 flex-1 justify-start">
           <motion.button
