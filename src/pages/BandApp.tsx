@@ -1266,11 +1266,6 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
 
   return (
     <div className="band-app-font h-[100dvh] min-h-[100dvh] bg-[#f5f5f7] flex flex-col overflow-hidden relative">
-      {/* Spacer for absolute navbar in member view when NOT fullscreen */}
-      {authRole === "member" && !isFullscreen && (
-        <div className="h-[44px] sm:h-[52px] flex-shrink-0" aria-hidden="true" />
-      )}
-      
       <AnimatePresence>
         {(!isFullscreen || authRole !== "member") && (
           <motion.header
@@ -1295,8 +1290,8 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             }}
             style={{ willChange: "transform, opacity" }}
             className={cn(
-              "px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)]",
-              authRole === "member" ? "absolute top-0 left-0 right-0 z-50" : "flex-shrink-0"
+              "px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)] z-50",
+              authRole === "singer" ? "flex-shrink-0" : "absolute top-0 left-0 right-0"
             )}>
         <div className="flex items-center gap-2 min-w-0 flex-1 justify-start">
           <motion.button
@@ -1490,6 +1485,11 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
       />
 
       {!(authRole === "singer" && singerViewMode === "lyrics") && (
+        <div className={cn(
+          "flex flex-col",
+          isSinger ? "flex-shrink-0" : "flex-1 min-h-0",
+          authRole === "member" && !isFullscreen && "pt-[60px]"
+        )}>
         <motion.div
           onClick={authRole === "member" ? handleDoubleTap : undefined}
           animate={{
@@ -1502,7 +1502,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
           className={cn(
             "bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-[0_4px_24px_rgba(245,158,11,0.25)]",
             isSinger ? "flex-shrink-0" : "flex-1 min-h-0 flex flex-col",
-            authRole === "member" && "touch-manipulation relative z-10"
+            authRole === "member" && "touch-manipulation"
           )}
         >
           <motion.div
@@ -1562,6 +1562,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
           </motion.div>
           </motion.div>
         </motion.div>
+        </div>
       )}
 
       {authRole === "singer" && (
