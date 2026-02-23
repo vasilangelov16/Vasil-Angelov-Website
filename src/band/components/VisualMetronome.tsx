@@ -111,12 +111,7 @@ export const VisualMetronome = memo(
             </p>
           </div>
         </div>
-        <label
-          className={cn(
-            "flex items-center gap-2.5 cursor-pointer touch-manipulation min-h-[44px] min-w-[44px] justify-end flex-shrink-0 transition-opacity duration-300",
-            !enabled && "opacity-70"
-          )}
-        >
+        <div className="flex items-center gap-2.5 min-h-[44px] min-w-[44px] justify-end flex-shrink-0">
           <span className="text-[10px] font-medium uppercase tracking-wider text-gray-600">
             {enabled ? "On" : "Off"}
           </span>
@@ -137,7 +132,7 @@ export const VisualMetronome = memo(
             className="react-switch"
             aria-label="Toggle metronome"
           />
-        </label>
+        </div>
       </div>
     );
   }
