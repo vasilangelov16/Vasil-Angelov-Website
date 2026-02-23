@@ -14,7 +14,7 @@ export const SearchBar = memo(
     onClear: () => void;
   }) => (
     <motion.div
-      className="relative flex items-center min-h-[44px] bg-white border border-gray-200 rounded-xl focus-within:border-gray-400 focus-within:ring-2 focus-within:ring-gray-200/50 transition-all duration-200"
+      className="relative flex items-center min-h-[44px] bg-white border border-gray-200/80 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.03)] focus-within:border-gray-300 focus-within:ring-2 focus-within:ring-gray-200/60 focus-within:shadow-sm transition-all duration-200"
       initial={false}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
@@ -47,7 +47,7 @@ export const SearchBar = memo(
               onClick={onClear}
               whileTap={APPLE_TAP}
               aria-label="Clear search"
-              className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 touch-manipulation"
+              className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 touch-manipulation transition-colors"
             >
               <X className="w-4 h-4" strokeWidth={2.5} />
             </motion.button>

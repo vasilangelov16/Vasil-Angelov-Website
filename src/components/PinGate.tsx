@@ -358,7 +358,7 @@ export const PinGate = ({ onAuth }: PinGateProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
         >
-          <div className="glass rounded-2xl border border-white/5 p-6 sm:p-8 shadow-2xl">
+          <div className="glass rounded-2xl border border-white/10 p-6 sm:p-8 shadow-2xl shadow-black/20">
             <form onSubmit={handleSubmit} className="space-y-5">
               <motion.div
                 key={error || "idle"}
@@ -387,7 +387,7 @@ export const PinGate = ({ onAuth }: PinGateProps) => {
                   placeholder="••••"
                   disabled={isSubmitting || isLockedOut}
                   className={cn(
-                    "w-full min-h-[52px] sm:h-14 pl-12 pr-4 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground/60",
+                    "w-full min-h-[52px] sm:h-14 pl-12 pr-4 rounded-xl bg-secondary/60 border border-border/80 text-foreground placeholder:text-muted-foreground/60",
                     "text-center text-lg tracking-[0.4em] font-mono touch-manipulation",
                     "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30",
                     "transition-all duration-200",
@@ -423,10 +423,10 @@ export const PinGate = ({ onAuth }: PinGateProps) => {
                 type="submit"
                 disabled={isSubmitting || isLockedOut}
                 className={cn(
-                  "w-full min-h-[52px] sm:h-14 rounded-xl font-medium tracking-[0.2em] uppercase text-sm touch-manipulation",
-                  "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground",
-                  "hover:shadow-[0_0_30px_hsl(350,45%,35%,0.4)] transition-all duration-300",
-                  "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                  "w-full min-h-[52px] sm:h-14 rounded-xl font-semibold tracking-[0.2em] uppercase text-sm touch-manipulation",
+                  "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20",
+                  "hover:shadow-[0_0_30px_hsl(350,45%,35%,0.35)] hover:brightness-105 transition-all duration-300",
+                  "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:brightness-100"
                 )}
                 whileHover={!isSubmitting && !isLockedOut ? { scale: 1.02 } : undefined}
                 whileTap={!isSubmitting && !isLockedOut ? { scale: 0.98 } : undefined}

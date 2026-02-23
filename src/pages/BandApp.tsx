@@ -127,9 +127,9 @@ const CurrentSongDisplay = memo(
       title={isClickable ? "Tap to scroll to song in list" : undefined}
       className={cn(
         "relative w-full overflow-hidden",
-        compact && "bg-gray-50/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+        compact && "bg-white/90 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
         !compact && "bg-white flex-1 min-h-0 flex flex-col items-center justify-center",
-        isClickable && "cursor-pointer touch-manipulation active:bg-gray-100/50"
+        isClickable && "cursor-pointer touch-manipulation active:bg-gray-50/80"
       )}
     >
       <AnimatePresence>
@@ -151,7 +151,7 @@ const CurrentSongDisplay = memo(
       <div
         className={cn(
           "relative z-10 w-full",
-          compact && "min-h-[48px] border-b border-gray-200/80 text-left",
+          compact && "min-h-[48px] border-b border-gray-100 text-left",
           !compact && "text-center",
           !compact && stageMode && "min-h-[200px] sm:min-h-[240px]",
           !compact && !stageMode && "min-h-[140px] sm:min-h-[180px]",
@@ -190,7 +190,7 @@ const CurrentSongDisplay = memo(
                   </h1>
                   <div className="flex items-center gap-2 shrink-0">
                     {currentSong.key && (
-                      <span className="rounded-md bg-gray-900 px-2.5 py-0.5 text-[11px] sm:text-xs font-bold text-white tabular-nums shadow-sm">
+                      <span className="rounded-lg bg-gray-900 px-2.5 py-0.5 text-[11px] sm:text-xs font-bold text-white tabular-nums shadow-sm">
                         {currentSong.key}
                       </span>
                     )}
@@ -311,9 +311,9 @@ const LyricsFontToolbar = memo(
     onToggleBold: () => void;
     className?: string;
   }) => (
-    <div className={cn("flex items-center justify-end gap-3 sm:gap-4", className)}>
-      <div className="flex items-center gap-0.5" role="group" aria-label="Font size">
-        <Type className="w-3.5 h-3.5 text-gray-400 mr-1 shrink-0" aria-hidden />
+    <div className={cn("flex items-center justify-end gap-2 sm:gap-3", className)}>
+      <div className="flex items-center rounded-xl border border-gray-200/80 overflow-hidden bg-gray-50/50 shadow-[0_1px_2px_rgba(0,0,0,0.03)]" role="group" aria-label="Font size">
+        <Type className="w-3.5 h-3.5 text-gray-400 ml-3 shrink-0" aria-hidden />
         <motion.button
           type="button"
           onClick={() => onAdjustFontSize(-1)}
@@ -323,10 +323,10 @@ const LyricsFontToolbar = memo(
           aria-label="Decrease font size"
           title="Smaller text"
           className={cn(
-            "min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-l-lg text-base font-medium transition-colors touch-manipulation",
+            "min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] text-base font-medium transition-colors touch-manipulation",
             fontSize === "small"
               ? "text-gray-300 cursor-default"
-              : "text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+              : "text-gray-600 hover:bg-gray-100/80 hover:text-gray-800"
           )}
         >
           −
@@ -340,10 +340,10 @@ const LyricsFontToolbar = memo(
           aria-label="Increase font size"
           title="Larger text"
           className={cn(
-            "min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-r-lg text-base font-medium transition-colors touch-manipulation border-l border-gray-200",
+            "min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] text-base font-medium transition-colors touch-manipulation border-l border-gray-200/80",
             fontSize === "large"
               ? "text-gray-300 cursor-default"
-              : "text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+              : "text-gray-600 hover:bg-gray-100/80 hover:text-gray-800"
           )}
         >
           +
@@ -358,10 +358,10 @@ const LyricsFontToolbar = memo(
         aria-label={isBold ? "Bold text (click to disable)" : "Bold text (click to enable)"}
         title={isBold ? "Bold text" : "Normal text"}
         className={cn(
-          "min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-lg text-sm transition-colors touch-manipulation",
+          "min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-xl text-sm font-semibold transition-all duration-200 touch-manipulation",
           isBold
-            ? "bg-amber-100 text-amber-800 font-bold"
-            : "text-gray-500 hover:bg-gray-100 hover:text-gray-700 font-normal"
+            ? "bg-amber-100 text-amber-800 border border-amber-200/60"
+            : "text-gray-500 hover:bg-gray-100/80 hover:text-gray-700 border border-gray-200/80"
         )}
       >
         B
@@ -391,11 +391,11 @@ const LyricsModal = memo(
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          overlayClassName="backdrop-blur-sm bg-black/90 dialog-overlay-fullbleed"
+          overlayClassName="backdrop-blur-md bg-black/50 dialog-overlay-fullbleed"
           aria-describedby={hasLyrics ? "lyrics-content" : undefined}
-          className="w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-none sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[calc(100dvh-2rem)] my-4 p-0 gap-0 overflow-hidden rounded-xl sm:rounded-2xl border border-gray-200 bg-white shadow-2xl duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 [&>button]:text-gray-600 [&>button]:hover:text-gray-900 [&>button]:hover:bg-gray-100 [&>button]:rounded-full [&>button]:p-2.5 sm:[&>button]:p-3 [&>button]:right-4 [&>button]:top-4 [&>button]:text-lg [&>button]:focus-visible:ring-2 [&>button]:focus-visible:ring-gray-400 [&>button]:focus-visible:ring-offset-2"
+          className="w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-none sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[calc(100dvh-2rem)] my-4 p-0 gap-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-gray-200/80 bg-white shadow-2xl shadow-black/10 duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 [&>button]:text-gray-500 [&>button]:hover:text-gray-800 [&>button]:hover:bg-gray-100/80 [&>button]:rounded-full [&>button]:p-2.5 sm:[&>button]:p-3 [&>button]:right-4 [&>button]:top-4 [&>button]:text-lg [&>button]:focus-visible:ring-2 [&>button]:focus-visible:ring-gray-300 [&>button]:focus-visible:ring-offset-2"
         >
-          <DialogHeader className="px-5 sm:px-8 lg:px-10 pt-6 sm:pt-8 pb-4 border-b border-gray-100 shrink-0 text-left min-w-0 space-y-2">
+          <DialogHeader className="px-6 sm:px-8 lg:px-10 pt-6 sm:pt-8 pb-4 border-b border-gray-100 bg-gray-50/30 shrink-0 text-left min-w-0 space-y-2">
             <DialogTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 pr-12 sm:pr-14 min-w-0 break-words leading-tight">
               {song.title}
             </DialogTitle>
@@ -456,12 +456,12 @@ const SingerLyricsView = memo(({ song }: { song: Song | null }) => {
 
   if (!song) {
     return (
-      <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 bg-gray-50">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 bg-[#fafafa]">
         <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mb-4" strokeWidth={1.5} />
-        <p className="text-gray-500 text-sm sm:text-base text-center font-medium">
+        <p className="text-gray-600 text-sm sm:text-base text-center font-medium">
           Select a song to view lyrics
         </p>
-        <p className="text-gray-400 text-xs sm:text-sm text-center mt-1">
+        <p className="text-gray-400 text-xs sm:text-sm text-center mt-1.5">
           Tap a song from the setlist, then switch to Lyrics view
         </p>
       </div>
@@ -472,7 +472,7 @@ const SingerLyricsView = memo(({ song }: { song: Song | null }) => {
 
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-white">
-      <div className="flex-shrink-0 px-4 py-2 border-b border-gray-100">
+      <div className="flex-shrink-0 px-4 py-2.5 border-b border-gray-100 bg-gray-50/50">
         <LyricsFontToolbar
           fontSize={fontSize}
           isBold={isBold}
@@ -623,7 +623,7 @@ const SongItem = memo(
           transition={APPLE_SPRING_TIGHT}
           title="Double-tap for lyrics"
           className={cn(
-            "w-full text-left rounded-lg transition-colors duration-200 ease-out flex items-center justify-between gap-1.5 touch-manipulation relative overflow-hidden",
+            "w-full text-left rounded-xl transition-all duration-200 ease-out flex items-center justify-between gap-1.5 touch-manipulation relative overflow-hidden",
             isSingerView
               ? ribbonColor
                 ? "pl-4 pr-3.5 py-3 sm:py-2.5 min-h-[50px] sm:min-h-[47px]"
@@ -632,8 +632,8 @@ const SongItem = memo(
                 ? "pl-3.5 pr-3 py-2.5 sm:py-2 min-h-[47px] sm:min-h-[44px]"
                 : "px-3 py-2.5 sm:py-2 min-h-[47px] sm:min-h-[44px]",
             isActive
-              ? "bg-gray-900 text-white"
-              : "bg-white text-gray-900 border border-gray-100 active:bg-gray-50 cursor-pointer"
+              ? "bg-gray-900 text-white shadow-sm"
+              : "bg-white text-gray-900 border border-gray-100/80 shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:bg-gray-50/80 cursor-pointer hover:border-gray-200/80"
           )}
         >
         {ribbonColor && (
@@ -674,11 +674,11 @@ const SongItem = memo(
               aria-label="Suggest next songs"
               title="Suggest 3 next songs based on key, tempo, and feel"
               className={cn(
-                "rounded-lg transition-colors touch-manipulation min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center",
+                "rounded-xl transition-all duration-200 touch-manipulation min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center",
                 isSingerView ? "p-2 sm:p-1.5" : "p-2 sm:p-1.5",
                 isAILoading
                   ? "text-amber-400/70 cursor-wait"
-                  : "text-amber-400 hover:bg-amber-400/20 hover:text-amber-300 active:bg-amber-400/30"
+                  : "text-amber-500 hover:bg-amber-100/80 hover:text-amber-600 active:scale-95"
               )}
             >
               <motion.span
@@ -1032,13 +1032,13 @@ const SetlistSection = memo(
           <p className="text-xs text-gray-400">
             Showing {visibleCount} of {filteredSongs.length} songs
           </p>
-          <motion.button
-            type="button"
-            onClick={loadAll}
-            whileTap={APPLE_TAP}
-            transition={APPLE_SPRING}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 touch-manipulation"
-          >
+            <motion.button
+              type="button"
+              onClick={loadAll}
+              whileTap={APPLE_TAP}
+              transition={APPLE_SPRING}
+              className="px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200/90 active:bg-gray-300/90 touch-manipulation transition-colors"
+            >
             Load all {filteredSongs.length} songs
           </motion.button>
         </div>
@@ -1154,20 +1154,20 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
   }, [onLogout]);
 
   return (
-    <div className="h-[100dvh] min-h-[100dvh] bg-gray-50 flex flex-col overflow-hidden">
-      <header className="flex-shrink-0 px-3 py-2 sm:px-4 sm:py-2 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white border-b border-gray-200 safe-area-top transition-colors duration-200">
+    <div className="band-app-font h-[100dvh] min-h-[100dvh] bg-[#f5f5f7] flex flex-col overflow-hidden">
+      <header className="flex-shrink-0 px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between gap-2 min-h-[44px] sm:min-h-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 safe-area-top shadow-[0_1px_0_rgba(0,0,0,0.03)] transition-colors duration-200">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <Music className="w-4 h-4 text-primary shrink-0" aria-hidden />
           <span className="text-gray-900 font-semibold text-sm truncate">Setlist</span>
           {hasWebSocket() && (
             <span
               className={cn(
-                "flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium shrink-0",
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium shrink-0 tracking-wide",
                 isConnected
-                  ? "bg-emerald-100 text-emerald-700"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
                   : isOffline
-                    ? "bg-gray-100 text-gray-600"
-                    : "bg-amber-100 text-amber-700"
+                    ? "bg-gray-50 text-gray-600 border border-gray-200/80"
+                    : "bg-amber-50 text-amber-700 border border-amber-200/60"
               )}
               title={
                 isConnected
@@ -1195,7 +1195,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={APPLE_SPRING}
-                className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-200 text-amber-900 shrink-0"
+                className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-100 text-amber-800 border border-amber-200/60 shrink-0"
               >
                 Synced
               </motion.span>
@@ -1225,10 +1225,10 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                   : "Show setlist"
               }
               className={cn(
-                "relative flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-colors h-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-8 justify-center touch-manipulation overflow-visible",
+                "relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 h-9 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-9 justify-center touch-manipulation overflow-visible",
                 singerViewMode === "lyrics"
-                  ? "bg-amber-500 text-amber-950"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-amber-500 text-amber-950 shadow-[0_2px_8px_rgba(245,158,11,0.25)]"
+                  : "bg-gray-100/90 text-gray-600 hover:bg-gray-200/90 hover:text-gray-800 active:scale-[0.98]"
               )}
             >
               {singerViewMode === "setlist" ? (
@@ -1251,7 +1251,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             </motion.button>
           )}
           {authRole === "member" && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <motion.button
                 type="button"
                 onClick={() => {
@@ -1267,15 +1267,15 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                 aria-pressed={metronomeVisible}
                 title={metronomeVisible ? "Hide metronome" : "Show metronome"}
                 className={cn(
-                  "flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-lg touch-manipulation transition-colors duration-200 ease-out",
+                  "flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-xl touch-manipulation transition-all duration-200 ease-out",
                   metronomeVisible
-                    ? "bg-red-100 text-red-600 hover:bg-red-200"
-                    : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-500"
+                    ? "bg-red-50 text-red-600 border border-red-200/60 shadow-sm"
+                    : "bg-gray-100/90 text-gray-400 hover:bg-gray-200/90 hover:text-gray-600"
                 )}
               >
                 <Timer size={18} className="shrink-0" strokeWidth={2} aria-hidden />
               </motion.button>
-              <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 shrink-0">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-gray-50 text-gray-600 border border-gray-200/80 shrink-0">
                 <Users className="w-3 h-3 shrink-0" />
                 <span className="hidden sm:inline">Member</span>
               </span>
@@ -1287,7 +1287,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             whileTap={APPLE_TAP}
             transition={APPLE_SPRING}
             aria-label="Log out"
-            className="p-2.5 sm:p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center touch-manipulation"
+            className="p-2.5 sm:p-1.5 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100/90 transition-all duration-200 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center touch-manipulation active:scale-95"
           >
             <LogOut className="w-4 h-4" />
           </motion.button>
@@ -1301,7 +1301,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25, ease: APPLE_EASE }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4"
             onClick={handleCloseLogout}
           >
             <motion.div
@@ -1309,7 +1309,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={APPLE_SPRING_GENTLE}
-              className="w-full max-w-xs rounded-2xl bg-white p-4 shadow-xl"
+              className="w-full max-w-xs rounded-2xl bg-white p-6 shadow-2xl shadow-black/10"
               onClick={(e) => e.stopPropagation()}
             >
             <p className="text-sm font-medium text-gray-900">Log out?</p>
@@ -1320,7 +1320,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                 onClick={handleCloseLogout}
                 whileTap={APPLE_TAP}
                 transition={APPLE_SPRING}
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </motion.button>
@@ -1329,7 +1329,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                 onClick={handleConfirmLogout}
                 whileTap={APPLE_TAP}
                 transition={APPLE_SPRING}
-                className="flex-1 rounded-xl bg-gray-900 px-3 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+                className="flex-1 rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-800 transition-colors shadow-sm"
               >
                 Log out
               </motion.button>
@@ -1342,19 +1342,19 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
       {!(authRole === "singer" && singerViewMode === "lyrics") && (
         <div
           className={cn(
-            "rounded-2xl p-[3px] sm:p-[4px] bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500",
-            isSinger ? "mx-1 my-0.5 flex-shrink-0" : "mx-1.5 sm:mx-2 my-1 sm:my-1.5 flex-1 min-h-0 flex flex-col"
+            "rounded-2xl p-[3px] sm:p-[4px] bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-[0_4px_24px_rgba(245,158,11,0.25)]",
+            isSinger ? "mx-1.5 my-1 flex-shrink-0" : "mx-2 sm:mx-3 my-2 sm:my-3 flex-1 min-h-0 flex flex-col"
           )}
         >
           <div
             className={cn(
-              "rounded-[13px] sm:rounded-[14px] overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col",
+              "rounded-[13px] sm:rounded-[14px] overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col shadow-inner",
               isSinger ? "min-h-0" : "flex-1 min-h-0"
             )}
           >
           <div
             className={cn(
-              "rounded-lg overflow-hidden bg-white flex flex-col m-0.5 sm:m-1",
+              "rounded-xl overflow-hidden bg-white flex flex-col m-0.5 sm:m-1 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
               isSinger ? "min-h-0" : "flex-1 min-h-0"
             )}
           >
@@ -1394,7 +1394,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
       )}
 
       {authRole === "singer" && (
-        <div className="flex-1 min-h-0 flex flex-col bg-white relative overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col bg-[#fafafa] relative overflow-hidden">
           {/* Keep both views mounted to preserve setlist scroll position when switching */}
           <motion.div
             initial={false}
@@ -1406,7 +1406,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             transition={{ duration: 0 }}
             className="absolute inset-0 flex flex-col"
           >
-            <div className="flex-shrink-0 px-2 py-1.5 bg-gray-50 space-y-2">
+            <div className="flex-shrink-0 px-3 py-2 bg-gray-50/80 border-b border-gray-100 space-y-2">
               <SearchBar
                 value={searchQuery}
                 onChange={handleSearchChange}

@@ -57,7 +57,7 @@ export const VisualMetronome = memo(
       <div
         role="region"
         aria-label={`Metronome ${enabled ? "on" : "off"}, ${clampedBpm} BPM`}
-        className="flex-shrink-0 flex items-center justify-between gap-4 px-5 py-3.5 border-b border-gray-100 bg-white transition-all duration-300 ease-out"
+        className="flex-shrink-0 flex items-center justify-between gap-4 px-5 py-3.5 border-b border-gray-100 bg-white/95 backdrop-blur-sm transition-all duration-300 ease-out"
       >
         <div
           className={cn(
@@ -103,10 +103,10 @@ export const VisualMetronome = memo(
             )}
           </div>
           <div className="flex flex-col gap-1.5 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-600">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-500">
               Metronome
             </p>
-            <p className="text-lg sm:text-xl font-bold tabular-nums tracking-tight text-gray-800">
+            <p className="text-lg sm:text-xl font-bold tabular-nums tracking-tight text-gray-900">
               {clampedBpm} <span className="text-sm font-medium text-gray-500">BPM</span>
             </p>
           </div>

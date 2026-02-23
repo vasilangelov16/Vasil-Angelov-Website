@@ -368,9 +368,14 @@ html {
   background: transparent;
 }
 .lyrics-scroll::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
+  background: #e5e7eb;
+  border-radius: 4px;
 }
 .lyrics-scroll::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: #d1d5db;
+}
+
+/* Band App - Apple-like system font stack */
+.band-app-font {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", "Helvetica Neue", sans-serif;
 }
