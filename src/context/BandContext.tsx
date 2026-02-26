@@ -16,6 +16,7 @@ export interface Song {
 
 export interface BandState {
   currentSong: Song | null;
+  currentSongStartTime: number | null;
   setlist: Song[];
   lastUpdate: number;
 }
@@ -148,20 +149,23 @@ const loadState = (): BandState => {
         }
       }
 
+      const base = {
+        currentSong,
+        currentSongStartTime: parsed.currentSongStartTime ?? null,
+        setlist,
+        lastUpdate: Date.now(),
+      };
       if (parsed.setlist.length < REPERTOIRE.length) {
-        return {
-          currentSong,
-          setlist,
-          lastUpdate: Date.now(),
-        };
+        return base;
       }
-      return deduplicateSetlist({ ...parsed, setlist, currentSong });
+      return deduplicateSetlist({ ...parsed, ...base });
     }
   } catch {
     // Ignore errors
   }
   return {
     currentSong: null,
+    currentSongStartTime: null,
     setlist: REPERTOIRE,
     lastUpdate: Date.now(),
   };
@@ -289,7 +293,12 @@ export const BandProvider = memo(function BandProvider({ children, authRole }: B
       }
       const now = Date.now();
       setState((prev) => {
-        const next = { ...prev, currentSong: song, lastUpdate: now };
+        const next = {
+          ...prev,
+          currentSong: song,
+          currentSongStartTime: song ? now : null,
+          lastUpdate: now,
+        };
         sendUpdate(next, prev);
         return next;
       });

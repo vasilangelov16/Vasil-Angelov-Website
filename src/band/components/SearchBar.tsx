@@ -28,7 +28,7 @@ export const SearchBar = memo(
         inputMode="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Search songs..."
+        placeholder="Search all songs..."
         aria-label="Search songs"
         autoComplete="off"
         className="flex-1 min-w-0 pl-9 pr-11 py-3 sm:py-2.5 bg-transparent border-0 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 text-base touch-manipulation"

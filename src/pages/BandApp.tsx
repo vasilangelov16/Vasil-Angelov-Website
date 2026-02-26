@@ -11,7 +11,7 @@ import {
   clearStoredAuth,
   type BandAuth,
 } from "@/components/PinGate";
-import { Music, Mic2, Users, LogOut, Sparkles, List, FileText, Timer, Type } from "lucide-react";
+import { Music, Mic2, Users, LogOut, Sparkles, List, FileText, Timer, Type, Calendar, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -21,6 +21,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { BandAppTutorial } from "@/components/BandAppTutorial";
+import { GigProvider } from "@/context/GigContext";
+import { GigManager } from "@/components/GigManager";
+import { GigHistoryTracker } from "@/components/GigHistoryTracker";
 import {
   PAGE_SIZE,
   SETLIST_SCROLL_STORAGE_KEY,
@@ -56,7 +59,18 @@ const CurrentSongDisplay = memo(
     stageMode = false,
     isFullscreen = false,
     onScrollToCurrent,
-  }: { compact?: boolean; stageMode?: boolean; isFullscreen?: boolean; onScrollToCurrent?: () => void }) => {
+    isConnected = true,
+    isOffline = false,
+    hasWs = false,
+  }: {
+    compact?: boolean;
+    stageMode?: boolean;
+    isFullscreen?: boolean;
+    onScrollToCurrent?: () => void;
+    isConnected?: boolean;
+    isOffline?: boolean;
+    hasWs?: boolean;
+  }) => {
   const { state } = useBandState();
   const { currentSong } = state;
   const reducedMotion = useReducedMotion();
@@ -202,11 +216,42 @@ const CurrentSongDisplay = memo(
             >
               {compact ? (
                 <>
-                  <span className="relative flex shrink-0 h-2 w-2">
-                    {!reducedMotion && (
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60" />
+                  <span
+                    className="relative flex shrink-0 h-2 w-2"
+                    title={
+                      hasWs
+                        ? isConnected
+                          ? "Connected"
+                          : isOffline
+                            ? "Offline"
+                            : "Connecting…"
+                        : undefined
+                    }
+                  >
+                    {hasWs ? (
+                      <>
+                        {!isOffline && !isConnected && !reducedMotion && (
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-60" />
+                        )}
+                        <span
+                          className={cn(
+                            "relative inline-flex rounded-full h-full w-full ring-2",
+                            isOffline
+                              ? "bg-gray-400 ring-gray-300/30"
+                              : isConnected
+                                ? "bg-emerald-600 ring-emerald-500/20"
+                                : "bg-amber-500 ring-amber-400/30"
+                          )}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        {!reducedMotion && (
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60" />
+                        )}
+                        <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600 ring-2 ring-emerald-500/20" />
+                      </>
                     )}
-                    <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600 ring-2 ring-emerald-500/20" />
                   </span>
                   <h1
                     className="font-serif font-black text-gray-950 truncate flex-1 min-w-0 text-[18px] sm:text-[20px] leading-tight tracking-tight drop-shadow-sm"
@@ -248,9 +293,42 @@ const CurrentSongDisplay = memo(
                     }}
                     className={cn("inline-flex items-center gap-1.5 transition-all duration-500", labelClass)}
                   >
-                    <span className={cn("relative flex transition-all duration-500", dotClass)}>
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600" />
+                    <span
+                      className={cn("relative flex transition-all duration-500", dotClass)}
+                      title={
+                        hasWs
+                          ? isConnected
+                            ? "Connected"
+                            : isOffline
+                              ? "Offline"
+                              : "Connecting…"
+                          : undefined
+                      }
+                    >
+                      {hasWs ? (
+                        <>
+                          {!isOffline && !isConnected && !reducedMotion && (
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75" />
+                          )}
+                          <span
+                            className={cn(
+                              "relative inline-flex rounded-full h-full w-full",
+                              isOffline
+                                ? "bg-gray-400"
+                                : isConnected
+                                  ? "bg-emerald-600"
+                                  : "bg-amber-500"
+                            )}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          {!reducedMotion && (
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                          )}
+                          <span className="relative inline-flex rounded-full h-full w-full bg-emerald-600" />
+                        </>
+                      )}
                     </span>
                     <span
                       className={cn(
@@ -840,16 +918,18 @@ const SetlistSection = memo(
     const loadMoreThrottleRef = useRef<number | null>(null);
 
   const filteredSongs = useMemo(() => {
-    let list = setlist.filter((s) => matchesCategory(s, categoryFilter));
     const q = deferredQuery.trim();
-    if (!q) return list;
-    const qNorm = normalizeForSearch(q);
-    return list.filter(
-      (s) =>
-        normalizeForSearch(s.title ?? "").includes(qNorm) ||
-        normalizeForSearch(s.artist ?? "").includes(qNorm) ||
-        normalizeForSearch(s.key ?? "").includes(qNorm)
-    );
+    const qNorm = q ? normalizeForSearch(q) : "";
+
+    if (qNorm) {
+      return setlist.filter(
+        (s) =>
+          normalizeForSearch(s.title ?? "").includes(qNorm) ||
+          normalizeForSearch(s.artist ?? "").includes(qNorm) ||
+          normalizeForSearch(s.key ?? "").includes(qNorm)
+      );
+    }
+    return setlist.filter((s) => matchesCategory(s, categoryFilter));
   }, [setlist, deferredQuery, categoryFilter]);
 
   const filteredLengthRef = useRef(filteredSongs.length);
@@ -1215,6 +1295,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
   const scrollToCurrentSongRef = useRef<(() => void) | null>(null);
   const lastTapRef = useRef<number>(0);
   const doubleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [gigPanelExpanded, setGigPanelExpanded] = useState(false);
 
   useEffect(() => {
     try {
@@ -1619,6 +1700,9 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
                   ? handleScrollToCurrentFromNowPlaying
                   : undefined
               }
+              isConnected={isConnected}
+              isOffline={isOffline}
+              hasWs={hasWebSocket()}
             />
           </motion.div>
           </motion.div>
@@ -1640,6 +1724,38 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             className="absolute inset-0 flex flex-col"
           >
             <div className="flex-shrink-0 px-3 py-2 bg-gray-50/80 border-b border-gray-100 space-y-2">
+              {authRole === "singer" && (
+                <div className="mb-2">
+                  <motion.button
+                    type="button"
+                    onClick={() => setGigPanelExpanded((e) => !e)}
+                    whileTap={APPLE_TAP}
+                    transition={APPLE_SPRING}
+                    className="flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-white border border-gray-200/80 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-gray-300 transition-colors text-left"
+                  >
+                    <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
+                    <span className="text-sm font-medium text-gray-700 flex-1">Gigs</span>
+                    <ChevronDown
+                      className={cn("w-4 h-4 text-gray-400 transition-transform", gigPanelExpanded && "rotate-180")}
+                    />
+                  </motion.button>
+                  <AnimatePresence>
+                    {gigPanelExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-2 rounded-xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] h-48 min-h-[120px]">
+                          <GigManager />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
               <SearchBar
                 value={searchQuery}
                 onChange={handleSearchChange}
@@ -1695,9 +1811,23 @@ const BandApp = () => {
 
   return (
     <BandProvider authRole={auth.role}>
-      <BandAppContent authRole={auth.role} onLogout={handleLogout} />
+      <GigProviderWrapper authRole={auth.role} onLogout={handleLogout} />
     </BandProvider>
   );
 };
+
+const GigProviderWrapper = memo(({ authRole, onLogout }: { authRole: BandAuth["role"]; onLogout: () => void }) => {
+  const { state } = useBandState();
+  return (
+    <GigProvider
+      currentSong={state.currentSong}
+      currentSongStartTime={state.currentSongStartTime ?? null}
+    >
+      <GigHistoryTracker />
+      <BandAppContent authRole={authRole} onLogout={onLogout} />
+    </GigProvider>
+  );
+});
+GigProviderWrapper.displayName = "GigProviderWrapper";
 
 export default BandApp;

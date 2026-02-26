@@ -163,9 +163,11 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
                 if (enriched.lastUpdate >= prev.lastUpdate) {
                   setHasUpdateRef.current(true);
                   setTimeout(() => setHasUpdateRef.current(false), 2500);
-                  // Preserve local currentSong on refresh: server often has null after restart
                   const currentSong = enriched.currentSong ?? prev.currentSong;
-                  return { ...enriched, currentSong };
+                  const currentSongStartTime =
+                    enriched.currentSongStartTime ??
+                    (currentSong?.id === prev.currentSong?.id ? prev.currentSongStartTime : currentSong ? Date.now() : null);
+                  return { ...enriched, currentSong, currentSongStartTime };
                 }
                 return prev;
               });
@@ -176,11 +178,18 @@ export function useBandWebSocket({ authRole, state: _state, setState, setHasUpda
                   setHasUpdateRef.current(true);
                   setTimeout(() => setHasUpdateRef.current(false), 2500);
                   const next = applyDelta(prev, delta);
-                  if (authRole === "singer" && !next.currentSong && prev.currentSong && delta.setlistIds?.some((id) => String(id) === String(prev.currentSong!.id))) {
-                    const found = next.setlist.find((s) => String(s.id) === String(prev.currentSong!.id));
-                    return found ? { ...next, currentSong: found } : next;
+                  const currentSongStartTime =
+                    next.currentSong?.id === prev.currentSong?.id
+                      ? prev.currentSongStartTime
+                      : next.currentSong
+                        ? Date.now()
+                        : null;
+                  const merged = { ...next, currentSongStartTime };
+                  if (authRole === "singer" && !merged.currentSong && prev.currentSong && delta.setlistIds?.some((id) => String(id) === String(prev.currentSong!.id))) {
+                    const found = merged.setlist.find((s) => String(s.id) === String(prev.currentSong!.id));
+                    return found ? { ...merged, currentSong: found } : merged;
                   }
-                  return next;
+                  return merged;
                 }
                 return prev;
               });
