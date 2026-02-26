@@ -5,6 +5,7 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
   memo,
   type ReactNode,
 } from "react";
@@ -37,8 +38,17 @@ function loadGigs(): Gig[] {
   try {
     const saved = localStorage.getItem(GIGS_STORAGE_KEY);
     if (saved) {
-      const parsed = JSON.parse(saved) as Gig[];
-      return Array.isArray(parsed) ? parsed : [];
+      const parsed = JSON.parse(saved) as unknown;
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(
+        (g): g is Gig =>
+          g &&
+          typeof g === "object" &&
+          typeof g.id === "string" &&
+          typeof g.title === "string" &&
+          typeof g.date === "string" &&
+          Array.isArray(g.history)
+      );
     }
   } catch {
     /* ignore */
@@ -49,8 +59,10 @@ function loadGigs(): Gig[] {
 function saveGigs(gigs: Gig[]) {
   try {
     localStorage.setItem(GIGS_STORAGE_KEY, JSON.stringify(gigs));
-  } catch {
-    /* ignore */
+  } catch (e) {
+    if (e instanceof DOMException && (e.name === "QuotaExceededError" || e.code === 22)) {
+      console.warn("[GigContext] Storage quota exceeded, gig data not persisted");
+    }
   }
 }
 
@@ -86,7 +98,10 @@ export const GigProvider = memo(function GigProvider({
   const [gigs, setGigs] = useState<Gig[]>(loadGigs);
   const [activeGigId, setActiveGigIdState] = useState<string | null>(() => {
     try {
-      return localStorage.getItem(ACTIVE_GIG_KEY);
+      const saved = localStorage.getItem(ACTIVE_GIG_KEY);
+      if (!saved) return null;
+      const gigs = loadGigs();
+      return gigs.some((g) => g.id === saved) ? saved : null;
     } catch {
       return null;
     }
@@ -104,8 +119,16 @@ export const GigProvider = memo(function GigProvider({
     }
   }, [activeGigId]);
 
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    saveGigs(gigs);
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      saveGigs(gigs);
+      saveTimeoutRef.current = null;
+    }, 100);
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
   }, [gigs]);
 
   const setActiveGigId = useCallback((id: string | null) => {

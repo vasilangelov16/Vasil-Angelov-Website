@@ -11,7 +11,7 @@ import {
   clearStoredAuth,
   type BandAuth,
 } from "@/components/PinGate";
-import { Music, Mic2, Users, LogOut, Sparkles, List, FileText, Timer, Type, Calendar, ChevronDown } from "lucide-react";
+import { Music, Mic2, Users, LogOut, Sparkles, List, FileText, Timer, Type, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -1295,7 +1295,7 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
   const scrollToCurrentSongRef = useRef<(() => void) | null>(null);
   const lastTapRef = useRef<number>(0);
   const doubleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [gigPanelExpanded, setGigPanelExpanded] = useState(false);
+  const [gigSheetOpen, setGigSheetOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -1458,6 +1458,26 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
           </AnimatePresence>
         </div>
         <div className="flex items-center gap-1 sm:gap-2 flex-1 justify-end min-w-0">
+          {authRole === "singer" && (
+            <>
+              <motion.button
+                type="button"
+                onClick={() => setGigSheetOpen(true)}
+                whileTap={APPLE_TAP}
+                transition={APPLE_SPRING}
+                aria-label="Gigs"
+                title="Gigs"
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 h-9 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-9 justify-center touch-manipulation",
+                  "bg-gray-100/90 text-gray-600 hover:bg-gray-200/90 hover:text-gray-800 active:scale-[0.98]"
+                )}
+              >
+                <Calendar className="w-3.5 h-3.5 sm:w-3 sm:h-3" strokeWidth={2} />
+                <span className="hidden sm:inline">Gigs</span>
+              </motion.button>
+              <GigManager open={gigSheetOpen} onOpenChange={setGigSheetOpen} />
+            </>
+          )}
           {authRole === "singer" && (
             <motion.button
               type="button"
@@ -1724,38 +1744,6 @@ const BandAppContent = memo(({ authRole, onLogout }: { authRole: BandAuth["role"
             className="absolute inset-0 flex flex-col"
           >
             <div className="flex-shrink-0 px-3 py-2 bg-gray-50/80 border-b border-gray-100 space-y-2">
-              {authRole === "singer" && (
-                <div className="mb-2">
-                  <motion.button
-                    type="button"
-                    onClick={() => setGigPanelExpanded((e) => !e)}
-                    whileTap={APPLE_TAP}
-                    transition={APPLE_SPRING}
-                    className="flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-white border border-gray-200/80 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-gray-300 transition-colors text-left"
-                  >
-                    <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
-                    <span className="text-sm font-medium text-gray-700 flex-1">Gigs</span>
-                    <ChevronDown
-                      className={cn("w-4 h-4 text-gray-400 transition-transform", gigPanelExpanded && "rotate-180")}
-                    />
-                  </motion.button>
-                  <AnimatePresence>
-                    {gigPanelExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-                        className="overflow-hidden"
-                      >
-                        <div className="mt-2 rounded-xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] h-48 min-h-[120px]">
-                          <GigManager />
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
               <SearchBar
                 value={searchQuery}
                 onChange={handleSearchChange}
