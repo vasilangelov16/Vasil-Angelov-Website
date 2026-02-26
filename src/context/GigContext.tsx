@@ -96,6 +96,13 @@ export const GigProvider = memo(function GigProvider({
   currentSongStartTime,
 }: GigProviderProps) {
   const [gigs, setGigs] = useState<Gig[]>(loadGigs);
+  const gigsRef = useRef(gigs);
+  gigsRef.current = gigs;
+  const activeGigIdRef = useRef<string | null>(null);
+  const currentSongRef = useRef(currentSong);
+  const currentSongStartTimeRef = useRef(currentSongStartTime);
+  currentSongRef.current = currentSong;
+  currentSongStartTimeRef.current = currentSongStartTime;
   const [activeGigId, setActiveGigIdState] = useState<string | null>(() => {
     try {
       const saved = localStorage.getItem(ACTIVE_GIG_KEY);
@@ -106,6 +113,8 @@ export const GigProvider = memo(function GigProvider({
       return null;
     }
   });
+
+  activeGigIdRef.current = activeGigId;
 
   useEffect(() => {
     try {
@@ -119,6 +128,46 @@ export const GigProvider = memo(function GigProvider({
     }
   }, [activeGigId]);
 
+  const syncRecordCurrentSongOnUnload = useCallback(() => {
+    const aid = activeGigIdRef.current;
+    const song = currentSongRef.current;
+    const startTime = currentSongStartTimeRef.current;
+    if (!aid || !song || startTime == null) return;
+    const duration = Date.now() - startTime;
+    if (duration < SONG_DISPLAY_THRESHOLD_MS) return;
+    const screensCount = Math.floor(duration / SONG_DISPLAY_THRESHOLD_MS);
+    const gigsNow = gigsRef.current;
+    const updated = gigsNow.map((g) => {
+      if (g.id !== aid) return g;
+      const existing = g.history.find((h) => h.songId === song.id);
+      const entry: GigHistoryEntry = existing
+        ? { ...existing, screensCount: existing.screensCount + screensCount, addedAt: Date.now() }
+        : {
+            songId: song.id,
+            songTitle: song.title,
+            songArtist: song.artist,
+            screensCount,
+            addedAt: Date.now(),
+          };
+      const history = existing
+        ? g.history.map((h) => (h.songId === song.id ? entry : h))
+        : [...g.history, entry];
+      return { ...g, history, updatedAt: Date.now() };
+    });
+    saveGigs(updated);
+    setGigs(updated);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => syncRecordCurrentSongOnUnload();
+    document.addEventListener("visibilitychange", handler);
+    window.addEventListener("pagehide", handler);
+    return () => {
+      document.removeEventListener("visibilitychange", handler);
+      window.removeEventListener("pagehide", handler);
+    };
+  }, [syncRecordCurrentSongOnUnload]);
+
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -131,9 +180,37 @@ export const GigProvider = memo(function GigProvider({
     };
   }, [gigs]);
 
-  const setActiveGigId = useCallback((id: string | null) => {
-    setActiveGigIdState(id);
-  }, []);
+  const setActiveGigId = useCallback(
+    (id: string | null) => {
+      if (id === null && activeGigId && currentSong && currentSongStartTime != null) {
+        const duration = Date.now() - currentSongStartTime;
+        if (duration >= SONG_DISPLAY_THRESHOLD_MS) {
+          setGigs((prev) =>
+            prev.map((g) => {
+              if (g.id !== activeGigId) return g;
+              const screensCount = Math.floor(duration / SONG_DISPLAY_THRESHOLD_MS);
+              const existing = g.history.find((h) => h.songId === currentSong.id);
+              const entry: GigHistoryEntry = existing
+                ? { ...existing, screensCount: existing.screensCount + screensCount, addedAt: Date.now() }
+                : {
+                    songId: currentSong.id,
+                    songTitle: currentSong.title,
+                    songArtist: currentSong.artist,
+                    screensCount,
+                    addedAt: Date.now(),
+                  };
+              const history = existing
+                ? g.history.map((h) => (h.songId === currentSong.id ? entry : h))
+                : [...g.history, entry];
+              return { ...g, history, updatedAt: Date.now() };
+            })
+          );
+        }
+      }
+      setActiveGigIdState(id);
+    },
+    [activeGigId, currentSong, currentSongStartTime]
+  );
 
   const createGig = useCallback(
     (data: Omit<Gig, "id" | "history" | "createdAt" | "updatedAt">) => {
