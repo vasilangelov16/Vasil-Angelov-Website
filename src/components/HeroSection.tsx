@@ -2,9 +2,16 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Compass } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import heroImage from "@/assets/hero-singer.png";
 import { AnimatedText } from "@/components/AnimatedText";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+
+/** Intrinsic size of default hero-1920 asset (3:2 from source) */
+const HERO_INTRINSIC_WIDTH = 1920;
+const HERO_INTRINSIC_HEIGHT = 1280;
+
+const HERO_WEBP_SRCSET =
+  "/images/hero-1280.webp 1280w, /images/hero-1920.webp 1920w, /images/hero-2560.webp 2560w";
+const HERO_AVIF_SRCSET = "/images/hero-1920.avif 1920w, /images/hero-2560.avif 2560w";
 
 /** lg — parallax and center-weighted crop only when viewport is wide enough */
 const LG_MEDIA = "(min-width: 1024px)";
@@ -13,7 +20,7 @@ export const HeroSection = () => {
   const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [heroImageLoaded, setHeroImageLoaded] = useState(false);
   const [isWideViewport, setIsWideViewport] = useState(
     () => typeof window !== "undefined" && window.matchMedia(LG_MEDIA).matches,
   );
@@ -21,7 +28,6 @@ export const HeroSection = () => {
   const parallaxEnabled = isWideViewport && !prefersReducedMotion;
 
   useEffect(() => {
-    setIsLoaded(true);
     const mq = window.matchMedia(LG_MEDIA);
     const syncWide = () => setIsWideViewport(mq.matches);
     syncWide();
@@ -62,14 +68,22 @@ export const HeroSection = () => {
           crop so the person sits further left on screen and viewport center lands on the dark void —
           centered headline/subtitle/CTA no longer sit over the body. Values step by breakpoint.
         */}
-        <img
-          src={heroImage}
-          alt="Vasil Angelov"
-          className="h-full w-full object-cover object-[32%_26%] min-[400px]:object-[34%_25%] sm:object-[36%_24%] md:object-[40%_23%] lg:object-[46%_22%] xl:object-[50%_20%] 2xl:object-[52%_18%]"
-          sizes="100vw"
-          decoding="async"
-          fetchPriority="high"
-        />
+        <picture>
+          <source type="image/avif" srcSet={HERO_AVIF_SRCSET} sizes="100vw" />
+          <source type="image/webp" srcSet={HERO_WEBP_SRCSET} sizes="100vw" />
+          <img
+            src="/images/hero-1920.webp"
+            srcSet={HERO_WEBP_SRCSET}
+            sizes="100vw"
+            width={HERO_INTRINSIC_WIDTH}
+            height={HERO_INTRINSIC_HEIGHT}
+            alt="Vasil Angelov"
+            className="h-full w-full object-cover object-[32%_26%] min-[400px]:object-[34%_25%] sm:object-[36%_24%] md:object-[40%_23%] lg:object-[46%_22%] xl:object-[50%_20%] 2xl:object-[52%_18%]"
+            decoding="async"
+            fetchPriority="high"
+            onLoad={() => setHeroImageLoaded(true)}
+          />
+        </picture>
         {/* Mobile / tablet: keep left third clear for the portrait; grade toward center for type */}
         <div
           className="absolute inset-0 lg:hidden"
@@ -125,7 +139,7 @@ export const HeroSection = () => {
       />
 
       {/* Floating Particles */}
-      {isLoaded &&
+      {heroImageLoaded &&
         [...Array(6)].map((_, i) => (
           <motion.div
             key={i}

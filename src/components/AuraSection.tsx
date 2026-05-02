@@ -127,7 +127,13 @@ export const AuraSection = () => {
               className="absolute right-0 top-0 w-4/5 sm:w-3/4 h-3/4 sm:h-3/5 rounded-[2rem] overflow-hidden shadow-2xl z-10 border border-white/10"
             >
               <div className="absolute inset-0 bg-primary/20 mix-blend-multiply z-10" />
-              <img src={auraHero} alt="Aura Atmosphere" className="w-full h-full object-cover grayscale-[20%]" />
+              <img
+                src={auraHero}
+                alt="Aura Atmosphere"
+                className="w-full h-full object-cover grayscale-[20%]"
+                loading="lazy"
+                decoding="async"
+              />
             </motion.div>
 
             {/* Foreground Element (Circular Video Portal) */}
@@ -136,7 +142,13 @@ export const AuraSection = () => {
               className="absolute left-4 bottom-20 sm:bottom-32 w-48 h-48 sm:w-64 sm:h-64 rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.6)] z-20 border border-white/20 backdrop-blur-md bg-black/20 group cursor-pointer overflow-hidden"
             >
               <div className="relative w-full h-full">
-                <img src={auraMoment} alt="Aura Film" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700 scale-125" />
+                <img
+                  src={auraMoment}
+                  alt="Aura Film"
+                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700 scale-125"
+                  loading="lazy"
+                  decoding="async"
+                />
                 <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-500" />
 
                 {/* Rotating Text Ring UI */}
@@ -166,7 +178,13 @@ export const AuraSection = () => {
               style={{ y: useTransform(scrollYProgress, [0, 1], [10, -30]) }}
               className="absolute left-35 sm:left-40 -bottom-16 sm:bottom-0 w-44 h-56 sm:w-56 sm:h-72 rounded-xl overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.5)] z-[15] border border-white/15 rotate-[6deg] hover:rotate-0 transition-transform duration-700"
             >
-              <img src={auraAccent} alt="Aura Moment" className="w-full h-full object-cover grayscale-[30%] hover:grayscale-0 transition-all duration-700" />
+              <img
+                src={auraAccent}
+                alt="Aura Moment"
+                className="w-full h-full object-cover grayscale-[30%] hover:grayscale-0 transition-all duration-700"
+                loading="lazy"
+                decoding="async"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
             </motion.div>
 

@@ -65,7 +65,15 @@ export const BiographySection = () => {
               className="relative aspect-[3/4] overflow-hidden rounded-sm border border-white/10 shadow-2xl"
             >
               <div className="absolute inset-0 bg-gradient-to-t from-background via-black/40 to-transparent opacity-90 z-10" />
-              <img src={biographyImage} alt="Vasil" className="w-full h-full object-cover grayscale contrast-125" />
+              <img
+                src={biographyImage}
+                alt="Vasil"
+                width={1280}
+                height={1920}
+                className="w-full h-full object-cover grayscale contrast-125"
+                loading="lazy"
+                decoding="async"
+              />
 
               {/* Integrated Quote on Image */}
               <div className="absolute bottom-8 left-6 right-6 z-20">
@@ -142,7 +150,11 @@ export const BiographySection = () => {
                   style={{ scale: useTransform(scrollYProgress, [0, 1], [1, 1.1]) }}
                   src={biographyImage}
                   alt="Vasil Angelov"
+                  width={1280}
+                  height={1920}
                   className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
 

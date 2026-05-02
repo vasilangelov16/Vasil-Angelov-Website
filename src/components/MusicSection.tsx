@@ -84,6 +84,8 @@ const SongCard = ({ song, index, isInView, subtitleKey, year }: { song: ReturnTy
         className="absolute inset-0 w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transition-all duration-700"
         animate={{ scale: isHovered ? 1.05 : 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
+        loading="lazy"
+        decoding="async"
       />
 
       {/* Overlays */}

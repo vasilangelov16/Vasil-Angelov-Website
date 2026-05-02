@@ -119,7 +119,13 @@ export const LiveGigsSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             className="relative aspect-video rounded-sm overflow-hidden group shadow-lg border border-white/5"
           >
-            <img src={gigPerformance} alt="Live" className="w-full h-full object-cover opacity-80" />
+            <img
+              src={gigPerformance}
+              alt="Live"
+              className="w-full h-full object-cover opacity-80"
+              loading="lazy"
+              decoding="async"
+            />
             <div className="absolute inset-0 bg-black/40" />
             <div className="absolute inset-0 border border-white/10 m-2 pointer-events-none" />
 
@@ -142,7 +148,13 @@ export const LiveGigsSection = () => {
             transition={{ delay: 0.2 }}
             className="relative aspect-video rounded-sm overflow-hidden group shadow-lg border border-white/5"
           >
-            <img src={gigVenue} alt="Venue" className="w-full h-full object-cover opacity-80" />
+            <img
+              src={gigVenue}
+              alt="Venue"
+              className="w-full h-full object-cover opacity-80"
+              loading="lazy"
+              decoding="async"
+            />
             <div className="absolute inset-0 bg-black/40" />
             <div className="absolute inset-0 border border-white/10 m-2 pointer-events-none" />
 
@@ -196,6 +208,8 @@ export const LiveGigsSection = () => {
               src={gigPerformance}
               alt="Live performance highlight"
               className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-700"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
             <div className="absolute inset-0 border border-white/5 group-hover:border-primary/20 transition-colors duration-500 pointer-events-none z-20" />
@@ -226,6 +240,8 @@ export const LiveGigsSection = () => {
               src={gigVenue}
               alt="Behind the scenes"
               className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-700"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
             <div className="absolute inset-0 border border-white/5 group-hover:border-primary/20 transition-colors duration-500 pointer-events-none z-20" />

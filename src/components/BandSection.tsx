@@ -52,6 +52,8 @@ const MemberCard = ({ member, index, isInView, roleKey }: { member: (typeof memb
           className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
           animate={{ scale: hovered ? 1.05 : 1 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
+          loading="lazy"
+          decoding="async"
         />
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-80" />
@@ -216,6 +218,8 @@ export const BandSection = () => {
                 src={gigPerformance}
                 alt="Live at Sofia Sessions"
                 className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-700"
+                loading="lazy"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
               <div className="absolute inset-0 border border-white/5 group-hover:border-primary/20 transition-colors duration-500 pointer-events-none z-20" />
@@ -244,6 +248,8 @@ export const BandSection = () => {
                 src={gigVenue}
                 alt="Acoustic Performance"
                 className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-700"
+                loading="lazy"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
               <div className="absolute inset-0 border border-white/5 group-hover:border-primary/20 transition-colors duration-500 pointer-events-none z-20" />
